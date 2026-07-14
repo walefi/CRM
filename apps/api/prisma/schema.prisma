@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  INVITED
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TRIAL
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model Tenant {
+  id            String       @id @default(uuid())
+  name          String
+  slug          String       @unique
+  domain        String?
+  logo          String?
+  plan          SubscriptionPlan @default(FREE)
+  status        TenantStatus @default(TRIAL)
+  settings      Json?        @default("{}")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?
+
+  users         User[]
+  auditLogs     AuditLog[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model User {
+  id              String     @id @default(uuid())
+  email           String     @unique
+  password        String
+  firstName       String
+  lastName        String
+  avatar          String?
+  phone           String?
+  status          UserStatus @default(INVITED)
+  role            String     @default("user")
+  permissions     Json?      @default("[]")
+  settings        Json?      @default("{}")
+  lastLoginAt     DateTime?
+  lastLoginIp     String?
+  refreshToken    String?
+  resetToken      String?
+  resetTokenExp   DateTime?
+  emailVerifiedAt DateTime?
+  tenantId        String
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  tenant       Tenant     @relation(fields: [tenantId], references: [id])
+  auditLogs    AuditLog[]
+
+  @@unique([email])
+  @@index([tenantId])
+  @@index([status])
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  entity    String
+  entityId  String?
+  userId    String?
+  tenantId  String
+  metadata  Json?    @default("{}")
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entity])
+  @@index([action])
+  @@index([createdAt])
+}
