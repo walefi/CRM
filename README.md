@@ -315,6 +315,47 @@ docker compose exec api pnpm db:migrate
 | GET    | /api/v1/quotes/:id/versions                    | Yes  | —     | Get version history             |
 | POST   | /api/v1/quotes/:id/versions/:versionId/restore | Yes  | —     | Restore version                 |
 
+### Automations
+
+| Method | Path                                  | Auth | Roles | Description                    |
+| ------ | ------------------------------------- | ---- | ----- | ------------------------------ |
+| GET    | /api/v1/automations                   | Yes  | —     | List automations with filters  |
+| GET    | /api/v1/automations/stats             | Yes  | —     | Dashboard statistics           |
+| GET    | /api/v1/automations/templates         | Yes  | —     | List templates                 |
+| GET    | /api/v1/automations/logs              | Yes  | —     | Execution logs                 |
+| GET    | /api/v1/automations/history           | Yes  | —     | Execution history              |
+| POST   | /api/v1/automations                   | Yes  | admin | Create automation              |
+| GET    | /api/v1/automations/:id               | Yes  | —     | Get automation by ID           |
+| PATCH  | /api/v1/automations/:id               | Yes  | admin | Update automation              |
+| DELETE | /api/v1/automations/:id               | Yes  | admin | Soft delete                    |
+| POST   | /api/v1/automations/:id/publish       | Yes  | admin | Publish (set ACTIVE)           |
+| POST   | /api/v1/automations/:id/duplicate     | Yes  | admin | Deep clone                     |
+| POST   | /api/v1/automations/:id/run           | Yes  | admin | Execute automation             |
+| POST   | /api/v1/automations/:id/test          | Yes  | admin | Test (dry-run)                 |
+| POST   | /api/v1/automations/run               | Yes  | admin | Execute (automationId in body) |
+| POST   | /api/v1/automations/test              | Yes  | admin | Test (automationId in body)    |
+| POST   | /api/v1/automations/templates         | Yes  | admin | Create template                |
+| POST   | /api/v1/automations/templates/:id/use | Yes  | admin | Create from template           |
+
+### Search
+
+| Method | Path                               | Auth | Roles | Description              |
+| ------ | ---------------------------------- | ---- | ----- | ------------------------ |
+| GET    | /api/v1/search                     | Yes  | —     | Global search            |
+| GET    | /api/v1/search/suggestions         | Yes  | —     | Autocomplete suggestions |
+| GET    | /api/v1/search/history             | Yes  | —     | Recent searches          |
+| GET    | /api/v1/search/favorites           | Yes  | —     | Saved favorites          |
+| POST   | /api/v1/search/favorites           | Yes  | —     | Add to favorites         |
+| DELETE | /api/v1/search/favorites/:type/:id | Yes  | —     | Remove from favorites    |
+| GET    | /api/v1/search/filters             | Yes  | —     | Saved search filters     |
+| POST   | /api/v1/search/filters             | Yes  | —     | Save search filter       |
+| DELETE | /api/v1/search/filters/:id         | Yes  | —     | Delete saved filter      |
+| GET    | /api/v1/search/stats               | Yes  | —     | Engine statistics        |
+| GET    | /api/v1/search/health              | Yes  | —     | Provider health check    |
+| POST   | /api/v1/search/reindex             | Yes  | admin | Rebuild search index     |
+| POST   | /api/v1/search/index               | Yes  | admin | Index document           |
+| DELETE | /api/v1/search/index/:type/:id     | Yes  | admin | Remove from index        |
+
 ---
 
 ## Environment Variables
@@ -381,15 +422,22 @@ docker compose exec api pnpm db:migrate
 
 ### Prisma Schema
 
-Models: `Tenant`, `User`, `AuditLog`
+Models: `Tenant`, `User`, `Role`, `Permission`, `Team`, `Department`, `Company`, `Contact`,
+`Lead`, `Pipeline`, `PipelineStage`, `Deal`, `Product`, `Category`, `Tag`, `CustomField`,
+`Activity`, `Task`, `Note`, `File`, `Conversation`, `Message`, `Quote`, `Contract`,
+`Automation`, `Trigger`, `Condition`, `Action`, `AutomationExecution`, `AutomationSchedule`,
+`AutomationLog`, `AutomationVariable`, `AutomationTemplate`, `Workflow`, `WorkflowVersion`,
+`WorkflowExecution`, `EventStore`, `EventOutbox`, `DeadLetter`, `Integration`, `Webhook`,
+`Notification`, `AuditLog`, `Setting`
 
-Enums: `UserStatus`, `TenantStatus`, `SubscriptionPlan`
+Enums: `UserStatus`, `TenantStatus`, `SubscriptionPlan`, `LeadStatus`, `DealStatus`,
+`TaskStatus`, `TaskPriority`, `AutomationStatus`, `TriggerType`, `ActionType`,
+`ScheduleFrequency`, `AutomationLogLevel`, `ConditionOperator`, `WorkflowStatus`,
+`WorkflowNodeType`, `WorkflowExecutionStatus`, `EventStatus`, `ChannelType`, `QuoteStatus`,
+`ContractStatus`
 
 Features: UUID primary keys, unique constraints, foreign keys, composite indexes,
-JSON fields (permissions, settings, metadata), timestamps, soft delete.
-
-New business entities (Companies, Contacts, Leads, Pipelines, Deals, Tasks) will be
-added in future stages.
+JSON fields, soft delete, multi-tenant isolation, audit trails, event sourcing.
 
 ---
 

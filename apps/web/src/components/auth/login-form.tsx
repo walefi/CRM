@@ -89,14 +89,18 @@ export function LoginForm() {
                 <Label htmlFor="firstName">Nome</Label>
                 <Input id="firstName" placeholder="John" {...registerForm.register('firstName')} />
                 {registerForm.formState.errors.firstName && (
-                  <p className="text-sm text-destructive">{registerForm.formState.errors.firstName.message}</p>
+                  <p className="text-sm text-destructive">
+                    {registerForm.formState.errors.firstName.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Sobrenome</Label>
                 <Input id="lastName" placeholder="Doe" {...registerForm.register('lastName')} />
                 {registerForm.formState.errors.lastName && (
-                  <p className="text-sm text-destructive">{registerForm.formState.errors.lastName.message}</p>
+                  <p className="text-sm text-destructive">
+                    {registerForm.formState.errors.lastName.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -113,7 +117,9 @@ export function LoginForm() {
                 />
               </div>
               {registerForm.formState.errors.email && (
-                <p className="text-sm text-destructive">{registerForm.formState.errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {registerForm.formState.errors.email.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
@@ -136,7 +142,9 @@ export function LoginForm() {
                 </button>
               </div>
               {registerForm.formState.errors.password && (
-                <p className="text-sm text-destructive">{registerForm.formState.errors.password.message}</p>
+                <p className="text-sm text-destructive">
+                  {registerForm.formState.errors.password.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
@@ -211,11 +219,16 @@ export function LoginForm() {
               </button>
             </div>
             {loginForm.formState.errors.password && (
-              <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
+              <p className="text-sm text-destructive">
+                {loginForm.formState.errors.password.message}
+              </p>
             )}
           </div>
           <div className="text-right">
-            <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-muted-foreground hover:text-primary"
+            >
               Esqueci minha senha
             </Link>
           </div>

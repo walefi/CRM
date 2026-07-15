@@ -23,28 +23,34 @@ async function bootstrap() {
   const port = configService.get<number>('API_PORT', 3001);
   const corsOrigin = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
 
-  app.use(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production',
-    crossOriginEmbedderPolicy: true,
-    crossOriginOpenerPolicy: true,
-    crossOriginResourcePolicy: { policy: 'same-origin' },
-    dnsPrefetchControl: true,
-    frameguard: { action: 'deny' },
-    hidePoweredBy: true,
-    hsts: process.env.NODE_ENV === 'production',
-    ieNoOpen: true,
-    noSniff: true,
-    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-    xssFilter: true,
-  }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: process.env.NODE_ENV === 'production',
+      crossOriginEmbedderPolicy: true,
+      crossOriginOpenerPolicy: true,
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+      dnsPrefetchControl: true,
+      frameguard: { action: 'deny' },
+      hidePoweredBy: true,
+      hsts: process.env.NODE_ENV === 'production',
+      ieNoOpen: true,
+      noSniff: true,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      xssFilter: true,
+    }),
+  );
 
-  app.use(compression({
-    threshold: parseInt(process.env.COMPRESSION_THRESHOLD || '1024', 10),
-  }));
+  app.use(
+    compression({
+      threshold: parseInt(process.env.COMPRESSION_THRESHOLD || '1024', 10),
+    }),
+  );
 
-  app.use(json({
-    limit: process.env.MAX_PAYLOAD_SIZE || '10mb',
-  }));
+  app.use(
+    json({
+      limit: process.env.MAX_PAYLOAD_SIZE || '10mb',
+    }),
+  );
 
   app.use(cookieParser());
 
@@ -125,6 +131,12 @@ async function bootstrap() {
     .addTag('Integrations', 'External integrations')
     .addTag('AI', 'AI-powered features')
     .addTag('Automations', 'Workflow automations')
+    .addTag('Workflows', 'Workflow Engine & Builder')
+    .addTag('Search', 'Global search engine')
+    .addTag('Analytics', 'Business intelligence & dashboards')
+    .addTag('Reports', 'Report engine & exports')
+    .addTag('Quotes', 'Commercial proposals')
+    .addTag('Contracts', 'Contract management')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig, {

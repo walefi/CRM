@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleDto, UpdateRoleDto } from './dto/roles.dto';
@@ -37,7 +48,11 @@ export class RolesController {
   @Patch(':id')
   @RolesDecorator('admin')
   @ApiOperation({ summary: 'Update role (admin)' })
-  update(@Param('id') id: string, @Body() dto: UpdateRoleDto, @CurrentUser('tenantId') tenantId: string) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateRoleDto,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
     return this.rolesService.update(id, tenantId, dto);
   }
 

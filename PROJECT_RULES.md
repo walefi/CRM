@@ -1,3 +1,33 @@
+# ARCHITECTURE RULES
+
+## Modular Monolith
+
+...
+
+## Event Driven Architecture
+
+...
+
+## Core Event Framework
+
+...
+
+## Dependency Rules
+
+...
+
+## Engine Rules
+
+...
+
+## Module Rules
+
+...
+
+## Validation Rules
+
+...
+
 # Prompt Mestre — CRM Enterprise
 
 # MISSÃO
@@ -1108,3 +1138,93 @@ Nunca esperar várias etapas para criar a interface.
 Gere capturas de tela (screenshots) do sistema ao final de cada implementação (por exemplo, da página de login, do dashboard e dos novos módulos).
 
 # Ao final de cada etapa deve preencher o arquivo PROJECT_PROGRESS.md com o que foi feito, erros encontrados e soluções, e em qual etapa que está atualmente
+
+# EVENT-DRIVEN ARCHITECTURE (EDA)
+
+A partir da Etapa 22, todo o CRM deverá seguir arquitetura orientada a eventos.
+
+Nenhum módulo poderá acessar diretamente Services de outro módulo.
+
+A comunicação entre módulos deverá ocorrer preferencialmente através do Event Bus.
+
+Fluxo obrigatório:
+
+Controller
+↓
+
+UseCase
+↓
+
+Repository
+
+↓
+
+Domain Event
+
+↓
+
+Event Bus
+
+↓
+
+Subscribers
+
+↓
+
+Notification Engine
+Workflow Engine
+Automation Engine
+Audit Engine
+Timeline Engine
+Search Engine
+Analytics Engine
+
+Todo evento deverá possuir:
+
+UUID
+
+Timestamp
+
+TenantId
+
+UserId
+
+EntityType
+
+EntityId
+
+Payload
+
+Version
+
+CorrelationId
+
+CausationId
+
+Origin
+
+Todo evento deverá ser persistido.
+
+Implementar Event Store preparado para Event Sourcing futuro.
+
+Implementar Outbox Pattern preparado para filas.
+
+Preparar integração futura com:
+
+RabbitMQ
+
+Kafka
+
+NATS
+
+Redis Streams
+
+Google Pub/Sub
+
+Azure Service Bus
+
+AWS SQS
+
+Nenhum módulo poderá depender diretamente de outro módulo.
+
+Toda comunicação deverá ser desacoplada.

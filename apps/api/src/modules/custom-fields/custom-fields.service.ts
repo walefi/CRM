@@ -53,9 +53,11 @@ export class CustomFieldsService {
       data: {
         ...data,
         tenantId,
-        options: options ? {
-          create: options.map((o, i) => ({ ...o, sortOrder: i })),
-        } : undefined,
+        options: options
+          ? {
+              create: options.map((o, i) => ({ ...o, sortOrder: i })),
+            }
+          : undefined,
       },
       include: { CustomFieldOption: true },
     });
@@ -94,7 +96,12 @@ export class CustomFieldsService {
     this.logger.log(`Custom field "${id}" soft-deleted`);
   }
 
-  async saveValues(tenantId: string, entity: string, entityId: string, values: { customFieldId: string; value: string }[]) {
+  async saveValues(
+    tenantId: string,
+    entity: string,
+    entityId: string,
+    values: { customFieldId: string; value: string }[],
+  ) {
     await this.prisma.$transaction(
       values.map(({ customFieldId, value }) =>
         this.prisma.customFieldValue.upsert({

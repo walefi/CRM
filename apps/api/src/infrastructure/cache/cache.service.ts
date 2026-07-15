@@ -54,12 +54,7 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  async set<T = unknown>(
-    namespace: string,
-    key: string,
-    value: T,
-    ttl?: number,
-  ): Promise<void> {
+  async set<T = unknown>(namespace: string, key: string, value: T, ttl?: number): Promise<void> {
     try {
       const fullKey = this.buildKey(namespace, key);
       const serialized = JSON.stringify(value);

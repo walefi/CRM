@@ -9,11 +9,8 @@ const configs: Map<string, unknown> = new Map();
 
 function loadEnvFiles() {
   const rootPath = resolve(__dirname, '..', '..', '..', '..');
-  
-  const envFiles = [
-    join(rootPath, '.env.local'),
-    join(rootPath, '.env'),
-  ];
+
+  const envFiles = [join(rootPath, '.env.local'), join(rootPath, '.env')];
 
   for (const envFile of envFiles) {
     if (existsSync(envFile)) {
@@ -66,7 +63,15 @@ export function validateRequiredEnv() {
   logger.log('Environment variables validated successfully');
 }
 
-export { appConfig, databaseConfig, redisConfig, jwtConfig, bullConfig, securityConfig, serverConfig } from './index';
+export {
+  appConfig,
+  databaseConfig,
+  redisConfig,
+  jwtConfig,
+  bullConfig,
+  securityConfig,
+  serverConfig,
+} from './index';
 export type {
   AppConfigType,
   DatabaseConfigType,

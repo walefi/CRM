@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DepartmentsService } from './departments.service';
 import { CreateDepartmentDto, UpdateDepartmentDto } from './dto/departments.dto';
@@ -37,7 +48,11 @@ export class DepartmentsController {
   @Patch(':id')
   @Roles('admin')
   @ApiOperation({ summary: 'Update department (admin)' })
-  update(@Param('id') id: string, @Body() dto: UpdateDepartmentDto, @CurrentUser('tenantId') tenantId: string) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateDepartmentDto,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
     return this.departmentsService.update(id, tenantId, dto);
   }
 

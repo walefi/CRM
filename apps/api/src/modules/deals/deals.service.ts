@@ -1,10 +1,19 @@
 ﻿import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDealDto, UpdateDealDto, DealFilterDto } from './dto/deals.dto';
+import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
+import {
+  DealCreatedEvent,
+  DealWonEvent,
+  DealLostEvent,
+} from '../../infrastructure/event-bus/domain-events';
 
 @Injectable()
 export class DealsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventBus: EventBusService,
+  ) {}
 
   async findAll(tenantId: string, filters: DealFilterDto) {
     const where: any = { tenantId, deletedAt: null };
@@ -80,22 +89,34 @@ export class DealsService {
   }
 
   async create(tenantId: string, dto: CreateDealDto, userId?: string) {
-    return this.prisma.deal.create({
+    const deal = await this.prisma.deal.create({
       data: { ...dto, tenantId, ownerId: dto.ownerId || userId },
       include: {
         owner: { select: { id: true, firstName: true, lastName: true } },
         stage: { select: { id: true, name: true } },
       },
     });
+
+    this.eventBus.publish(new DealCreatedEvent(deal as any, tenantId, userId)).catch(() => {});
+
+    return deal;
   }
 
-  async update(id: string, tenantId: string, dto: UpdateDealDto) {
+  async update(id: string, tenantId: string, dto: UpdateDealDto, userId?: string) {
     await this.findById(id, tenantId);
-    return this.prisma.deal.update({
+    const deal = await this.prisma.deal.update({
       where: { id },
       data: dto,
       include: { stage: { select: { id: true, name: true } } },
     });
+
+    if (dto.status === 'WON') {
+      this.eventBus.publish(new DealWonEvent(deal as any, tenantId, userId)).catch(() => {});
+    } else if (dto.status === 'LOST') {
+      this.eventBus.publish(new DealLostEvent(deal as any, tenantId, userId)).catch(() => {});
+    }
+
+    return deal;
   }
 
   async remove(id: string, tenantId: string) {

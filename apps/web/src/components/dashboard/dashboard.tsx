@@ -34,9 +34,7 @@ export function Dashboard() {
         } border-r bg-card flex flex-col transition-all duration-300`}
       >
         <div className="p-4 border-b flex items-center justify-between">
-          {sidebarOpen && (
-            <h2 className="font-bold text-lg">CRM</h2>
-          )}
+          {sidebarOpen && <h2 className="font-bold text-lg">CRM</h2>}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground"
@@ -52,11 +50,7 @@ export function Dashboard() {
             active
             collapsed={!sidebarOpen}
           />
-          <NavItem
-            icon={<Users className="h-5 w-5" />}
-            label="Contatos"
-            collapsed={!sidebarOpen}
-          />
+          <NavItem icon={<Users className="h-5 w-5" />} label="Contatos" collapsed={!sidebarOpen} />
           <NavItem
             icon={<Building2 className="h-5 w-5" />}
             label="Empresas"
@@ -92,7 +86,11 @@ export function Dashboard() {
               className="flex-1 p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground text-center"
               title="Alternar tema"
             >
-              {theme === 'dark' ? <Sun className="h-4 w-4 mx-auto" /> : <Moon className="h-4 w-4 mx-auto" />}
+              {theme === 'dark' ? (
+                <Sun className="h-4 w-4 mx-auto" />
+              ) : (
+                <Moon className="h-4 w-4 mx-auto" />
+              )}
             </button>
             <button
               onClick={() => clearAuth()}
@@ -152,8 +150,8 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Olá, {user.firstName}! O sistema está em construção. Novas funcionalidades
-                serão adicionadas nas próximas etapas. Fique atento!
+                Olá, {user.firstName}! O sistema está em construção. Novas funcionalidades serão
+                adicionadas nas próximas etapas. Fique atento!
               </p>
               <div className="mt-6 flex gap-3">
                 <Button>Ver Pipeline</Button>

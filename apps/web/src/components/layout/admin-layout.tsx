@@ -3,25 +3,56 @@
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, Users, Building2, Target, KanbanSquare, DollarSign,
-  CheckSquare, Bell, Puzzle, Sparkles, Workflow, Settings, Shield,
-  ChevronLeft, ChevronRight, Sun, Moon, Search, Command, Menu,
-  MessageCircle, Phone, Calendar, FileText, Package,
-  Mail, LogOut, User, Briefcase, ChevronDown,
-  PieChart, TrendingUp, Activity,
+  LayoutDashboard,
+  Users,
+  Building2,
+  Target,
+  KanbanSquare,
+  DollarSign,
+  CheckSquare,
+  Bell,
+  Puzzle,
+  Sparkles,
+  Workflow,
+  Settings,
+  Shield,
+  ChevronLeft,
+  ChevronRight,
+  Sun,
+  Moon,
+  Search,
+  Menu,
+  MessageCircle,
+  Phone,
+  Calendar,
+  FileText,
+  Package,
+  Mail,
+  LogOut,
+  User,
+  Briefcase,
+  ChevronDown,
+  PieChart,
+  TrendingUp,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { BreadcrumbNav } from '@/components/layout/breadcrumb';
+import { GlobalSearchModal, OpenSearchButton } from '@/components/layout/global-search';
 
 interface NavGroup {
   label: string;
@@ -68,6 +99,7 @@ const navigation: NavGroup[] = [
   {
     label: 'Automação',
     items: [
+      { label: 'Workflows', icon: <Workflow className="h-5 w-5" />, href: '/workflows' },
       { label: 'Automações', icon: <Workflow className="h-5 w-5" />, href: '/automations' },
       { label: 'IA', icon: <Sparkles className="h-5 w-5" />, href: '/ai' },
     ],
@@ -94,7 +126,7 @@ const navigation: NavGroup[] = [
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  user?: { firstName: string; lastName: string; email: string; avatar?: string; role?: string; };
+  user?: { firstName: string; lastName: string; email: string; avatar?: string; role?: string };
   tenant?: { name: string; plan: string };
 }
 
@@ -102,6 +134,7 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
 
@@ -109,7 +142,10 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
     <div className="flex flex-col h-full">
       <div className="h-16 flex items-center justify-between px-4 border-b shrink-0">
         {!collapsed && (
-          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          <Link
+            href="/"
+            className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
+          >
             CRM
           </Link>
         )}
@@ -176,11 +212,22 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
           </Link>
         </div>
         {user && (
-          <div className={cn('flex items-center rounded-lg p-2 bg-accent/50', collapsed && 'justify-center')}>
-            <Avatar src={user.avatar} fallback={`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`} size="sm" />
+          <div
+            className={cn(
+              'flex items-center rounded-lg p-2 bg-accent/50',
+              collapsed && 'justify-center',
+            )}
+          >
+            <Avatar
+              src={user.avatar}
+              fallback={`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`}
+              size="sm"
+            />
             {!collapsed && (
               <div className="ml-2 min-w-0">
-                <p className="text-sm font-medium truncate">{user.firstName} {user.lastName}</p>
+                <p className="text-sm font-medium truncate">
+                  {user.firstName} {user.lastName}
+                </p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
             )}
@@ -193,10 +240,12 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Desktop Sidebar */}
-      <aside className={cn(
-        'hidden lg:flex flex-col border-r bg-card transition-all duration-300',
-        collapsed ? 'w-16' : 'w-60',
-      )}>
+      <aside
+        className={cn(
+          'hidden lg:flex flex-col border-r bg-card transition-all duration-300',
+          collapsed ? 'w-16' : 'w-60',
+        )}
+      >
         {sidebarContent}
       </aside>
 
@@ -243,19 +292,19 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
                 className="pl-10"
                 autoFocus
                 onBlur={() => setSearchOpen(false)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const value = (e.target as HTMLInputElement).value;
+                    if (value.trim()) {
+                      router.push(`/search?q=${encodeURIComponent(value)}`);
+                      setSearchOpen(false);
+                    }
+                  }
+                }}
               />
             </div>
           ) : (
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors"
-            >
-              <Search className="h-4 w-4" />
-              <span>Buscar...</span>
-              <kbd className="ml-8 px-1.5 py-0.5 text-xs rounded bg-muted">
-                <Command className="h-3 w-3 inline" />K
-              </kbd>
-            </button>
+            <OpenSearchButton />
           )}
 
           <div className="flex-1" />
@@ -286,11 +335,22 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link href="/profile"><User className="h-4 w-4 mr-2" />Perfil</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link href="/settings"><Settings className="h-4 w-4 mr-2" />Configurações</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <User className="h-4 w-4 mr-2" />
+                    Perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurações
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-destructive">
-                  <LogOut className="h-4 w-4 mr-2" />Sair
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -315,9 +375,14 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
         <footer className="h-10 border-t flex items-center px-6 text-xs text-muted-foreground shrink-0">
           <span>CRM Enterprise v1.0.0</span>
           <span className="flex-1" />
-          {tenant && <span>{tenant.name} — {tenant.plan}</span>}
+          {tenant && (
+            <span>
+              {tenant.name} — {tenant.plan}
+            </span>
+          )}
         </footer>
       </div>
+      <GlobalSearchModal />
     </div>
   );
 }

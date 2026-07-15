@@ -48,7 +48,8 @@ export default function ForgotPasswordPage() {
           <CardHeader className="text-center">
             <CardTitle>Email enviado</CardTitle>
             <CardDescription>
-              Se o email informado estiver cadastrado, você receberá um link para redefinir sua senha.
+              Se o email informado estiver cadastrado, você receberá um link para redefinir sua
+              senha.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">

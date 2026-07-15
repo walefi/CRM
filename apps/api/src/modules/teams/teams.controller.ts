@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TeamsService } from './teams.service';
 import { CreateTeamDto, UpdateTeamDto } from './dto/teams.dto';
@@ -37,7 +48,11 @@ export class TeamsController {
   @Patch(':id')
   @Roles('admin')
   @ApiOperation({ summary: 'Update team (admin)' })
-  update(@Param('id') id: string, @Body() dto: UpdateTeamDto, @CurrentUser('tenantId') tenantId: string) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTeamDto,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
     return this.teamsService.update(id, tenantId, dto);
   }
 

@@ -13,13 +13,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const schema = z.object({
-  password: z.string().min(8, 'Mínimo de 8 caracteres'),
-  confirmPassword: z.string(),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: 'Senhas não conferem',
-  path: ['confirmPassword'],
-});
+const schema = z
+  .object({
+    password: z.string().min(8, 'Mínimo de 8 caracteres'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Senhas não conferem',
+    path: ['confirmPassword'],
+  });
 
 type FormData = z.infer<typeof schema>;
 
@@ -71,9 +73,7 @@ export default function ResetPasswordForm() {
         <Card className="w-full max-w-md animate-fade-in">
           <CardHeader className="text-center">
             <CardTitle>Senha redefinida</CardTitle>
-            <CardDescription>
-              Sua senha foi alterada com sucesso.
-            </CardDescription>
+            <CardDescription>Sua senha foi alterada com sucesso.</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <a href="/" className="text-primary hover:underline text-sm">
@@ -127,7 +127,9 @@ export default function ResetPasswordForm() {
                 {...form.register('confirmPassword')}
               />
               {form.formState.errors.confirmPassword && (
-                <p className="text-sm text-destructive">{form.formState.errors.confirmPassword.message}</p>
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.confirmPassword.message}
+                </p>
               )}
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>

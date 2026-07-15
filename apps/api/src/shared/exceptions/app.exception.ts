@@ -2,7 +2,10 @@ export abstract class AppException extends Error {
   abstract readonly code: string;
   abstract readonly statusCode: number;
 
-  constructor(message: string, public readonly details?: unknown) {
+  constructor(
+    message: string,
+    public readonly details?: unknown,
+  ) {
     super(message);
     this.name = this.constructor.name;
     Error.captureStackTrace(this, this.constructor);

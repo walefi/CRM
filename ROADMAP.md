@@ -15,6 +15,13 @@
 - [x] Etapa 11 - Pipeline e Kanban
 - [x] Etapa 17 - Campos Personalizados Engine
 - [x] Etapa 18 - Propostas Comerciais (Quotes)
+- [x] Etapa 22 - Workflow Engine (Event-Driven)
+- [x] Etapa 23 - Automation Engine (Event-Driven)
+- [x] Etapa 24 - Search Engine (Global Search)
+- [x] Etapa 25 - Analytics Engine (Business Intelligence)
+- [x] Etapa 26 - Reporting Engine (Enterprise Reports)
+- [x] Etapa 27 - Integration Hub (Unified Integration Platform)
+- [x] Etapa 28 - AI Platform (Enterprise AI Engine)
 
 ---
 
@@ -91,9 +98,9 @@
 
 # FASE 4 — Automações
 
-36. Motor de Automações
+36. [x] Motor de Automações
 
-37. Workflow Builder
+37. [x] Workflow Builder
 
 38. Webhooks
 

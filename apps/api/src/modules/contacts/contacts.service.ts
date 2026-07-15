@@ -1,10 +1,15 @@
 ﻿import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateContactDto, UpdateContactDto, ContactFilterDto } from './dto/contacts.dto';
+import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
+import { ContactCreatedEvent } from '../../infrastructure/event-bus/domain-events';
 
 @Injectable()
 export class ContactsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventBus: EventBusService,
+  ) {}
 
   async findAll(tenantId: string, filters: ContactFilterDto) {
     const where: any = { tenantId, deletedAt: null };
@@ -65,10 +70,16 @@ export class ContactsService {
   }
 
   async create(tenantId: string, dto: CreateContactDto, userId?: string) {
-    return this.prisma.contact.create({
+    const contact = await this.prisma.contact.create({
       data: { ...dto, tenantId, ownerId: dto.ownerId || userId },
       include: { owner: { select: { id: true, firstName: true, lastName: true } } },
     });
+
+    this.eventBus
+      .publish(new ContactCreatedEvent(contact as any, tenantId, userId))
+      .catch(() => {});
+
+    return contact;
   }
 
   async update(id: string, tenantId: string, dto: UpdateContactDto) {

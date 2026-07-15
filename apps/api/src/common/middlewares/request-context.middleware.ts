@@ -1,7 +1,10 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuid } from 'uuid';
-import { runWithContext, RequestContext } from '../../infrastructure/observability/logging/app-logger.service';
+import {
+  runWithContext,
+  RequestContext,
+} from '../../infrastructure/observability/logging/app-logger.service';
 
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {

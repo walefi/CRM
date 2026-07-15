@@ -118,7 +118,9 @@ export class QueueService implements OnModuleDestroy {
     return counts;
   }
 
-  async getQueueHealth(): Promise<Record<string, { waiting: number; active: number; failed: number }>> {
+  async getQueueHealth(): Promise<
+    Record<string, { waiting: number; active: number; failed: number }>
+  > {
     const health: Record<string, { waiting: number; active: number; failed: number }> = {};
 
     for (const [name, queue] of this.queues) {

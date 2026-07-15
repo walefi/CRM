@@ -48,7 +48,7 @@ export class TeamsService {
       where: { id },
       data: {
         ...data,
-        ...(memberIds ? { users: { set: memberIds.map(uid => ({ id: uid })) } } : {}),
+        ...(memberIds ? { users: { set: memberIds.map((uid) => ({ id: uid })) } } : {}),
       },
       include: {
         lead: { select: { id: true, firstName: true, lastName: true } },

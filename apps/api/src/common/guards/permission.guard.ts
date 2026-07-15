@@ -10,9 +10,11 @@ import { Reflector } from '@nestjs/core';
 export const PERMISSIONS_KEY = 'permissions';
 
 export const RequirePermissions = (...permissions: string[]) =>
-  Reflect.metadata ? Reflect.metadata(PERMISSIONS_KEY, permissions) : (target: any) => {
-    Reflect.defineMetadata(PERMISSIONS_KEY, permissions, target);
-  };
+  Reflect.metadata
+    ? Reflect.metadata(PERMISSIONS_KEY, permissions)
+    : (target: any) => {
+        Reflect.defineMetadata(PERMISSIONS_KEY, permissions, target);
+      };
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -21,10 +23,10 @@ export class PermissionGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
-      PERMISSIONS_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!requiredPermissions || requiredPermissions.length === 0) {
       return true;
@@ -38,9 +40,7 @@ export class PermissionGuard implements CanActivate {
     }
 
     const userPermissions: string[] = user.permissions || [];
-    const hasPermission = requiredPermissions.some((perm) =>
-      userPermissions.includes(perm),
-    );
+    const hasPermission = requiredPermissions.some((perm) => userPermissions.includes(perm));
 
     if (!hasPermission) {
       this.logger.warn(

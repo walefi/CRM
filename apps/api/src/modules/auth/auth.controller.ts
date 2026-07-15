@@ -118,7 +118,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Change password (current + new)' })
   @ApiResponse({ status: 200, description: 'Password changed' })
   @ApiResponse({ status: 400, description: 'Current password is incorrect' })
-  changePassword(@CurrentUser('id') userId: string, @Body() dto: ChangePasswordDto, @Req() req: Request) {
+  changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ) {
     return this.authService.changePassword(userId, dto, {
       ip: req.ip || 'unknown',
       userAgent: req.headers['user-agent'] || 'unknown',

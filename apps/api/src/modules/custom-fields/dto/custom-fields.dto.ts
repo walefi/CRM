@@ -3,11 +3,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCustomFieldDto {
   @ApiProperty({ example: 'CNPJ da Empresa' })
-  @IsString() @MinLength(2) @MaxLength(100)
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
   name: string;
 
   @ApiProperty({ example: 'cnpj' })
-  @IsString() @MinLength(2) @MaxLength(100)
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
   key: string;
 
   @ApiProperty({ example: 'companies' })
@@ -19,55 +23,68 @@ export class CreateCustomFieldDto {
   type: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   placeholder?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   helpText?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   category?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   groupId?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isRequired?: boolean;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isReadonly?: boolean;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isHidden?: boolean;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   defaultValue?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   regex?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   mask?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   minLength?: number;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   maxLength?: number;
 
   @ApiPropertyOptional()
@@ -75,49 +92,62 @@ export class CreateCustomFieldDto {
   options?: { label: string; value: string; color?: string }[];
 
   @ApiPropertyOptional()
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   sortOrder?: number;
 }
 
 export class UpdateCustomFieldDto {
   @ApiPropertyOptional()
-  @IsOptional() @IsString() @MinLength(2) @MaxLength(100)
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
   name?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   type?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   placeholder?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   helpText?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isRequired?: boolean;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isReadonly?: boolean;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isHidden?: boolean;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   defaultValue?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   sortOrder?: number;
 
   @ApiPropertyOptional()
@@ -125,7 +155,8 @@ export class UpdateCustomFieldDto {
   options?: { label: string; value: string; color?: string }[];
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   status?: string;
 }
 

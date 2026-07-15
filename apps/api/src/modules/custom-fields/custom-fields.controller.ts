@@ -1,7 +1,23 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CustomFieldsService } from './custom-fields.service';
-import { CreateCustomFieldDto, UpdateCustomFieldDto, CustomFieldValueDto } from './dto/custom-fields.dto';
+import {
+  CreateCustomFieldDto,
+  UpdateCustomFieldDto,
+  CustomFieldValueDto,
+} from './dto/custom-fields.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -64,7 +80,11 @@ export class CustomFieldsController {
   @Patch(':id')
   @Roles('admin')
   @ApiOperation({ summary: 'Update custom field (admin)' })
-  update(@Param('id') id: string, @Body() dto: UpdateCustomFieldDto, @CurrentUser('tenantId') tenantId: string) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCustomFieldDto,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
     return this.customFieldsService.update(id, tenantId, dto);
   }
 

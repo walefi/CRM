@@ -36,7 +36,8 @@ export function DynamicInput({
     placeholder: field.placeholder || field.name,
     disabled: field.isReadonly,
     value: value || '',
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => onChange(e.target.value),
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      onChange(e.target.value),
   };
 
   const renderInput = () => {
@@ -73,15 +74,29 @@ export function DynamicInput({
       case 'multiselect':
         return (
           <div className="flex flex-wrap gap-1 p-2 border rounded-md min-h-[40px]">
-            {(value || '').split(',').filter(Boolean).map((v) => (
-              <span key={v} className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary flex items-center gap-1">
-                {v}
-                <button onClick={() => {
-                  const newVal = (value || '').split(',').filter(b => b !== v).join(',');
-                  onChange(newVal);
-                }} className="hover:text-destructive">&times;</button>
-              </span>
-            ))}
+            {(value || '')
+              .split(',')
+              .filter(Boolean)
+              .map((v) => (
+                <span
+                  key={v}
+                  className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary flex items-center gap-1"
+                >
+                  {v}
+                  <button
+                    onClick={() => {
+                      const newVal = (value || '')
+                        .split(',')
+                        .filter((b) => b !== v)
+                        .join(',');
+                      onChange(newVal);
+                    }}
+                    className="hover:text-destructive"
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
             <select
               className="flex-1 min-w-[120px] bg-transparent text-sm border-none outline-none"
               value=""
@@ -95,7 +110,9 @@ export function DynamicInput({
             >
               <option value="">+ Adicionar</option>
               {(field.options || []).map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -165,9 +182,7 @@ export function DynamicInput({
         </Label>
       )}
       {renderInput()}
-      {field.helpText && (
-        <p className="text-xs text-muted-foreground">{field.helpText}</p>
-      )}
+      {field.helpText && <p className="text-xs text-muted-foreground">{field.helpText}</p>}
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );

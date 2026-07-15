@@ -1,11 +1,16 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EntityService } from '../../shared/services/entity.service';
+import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
+import { LeadCreatedEvent, LeadConvertedEvent } from '../../infrastructure/event-bus/domain-events';
 import { CreateLeadDto, UpdateLeadDto, LeadFilterDto, ConvertLeadDto } from './dto/leads.dto';
 
 @Injectable()
 export class LeadsService extends EntityService<CreateLeadDto, UpdateLeadDto> {
-  constructor(protected readonly prisma: PrismaService) {
+  constructor(
+    protected readonly prisma: PrismaService,
+    private readonly eventBus: EventBusService,
+  ) {
     super(prisma, prisma.lead, 'Lead');
   }
 
@@ -81,6 +86,9 @@ export class LeadsService extends EntityService<CreateLeadDto, UpdateLeadDto> {
       include: { owner: { select: { id: true, firstName: true, lastName: true } } },
     });
     this.logger.log(`Lead "${lead.firstName} ${lead.lastName}" created`);
+    this.eventBus
+      .publish(new LeadCreatedEvent(lead as Record<string, unknown>, tenantId, userId))
+      .catch(() => {});
     return lead;
   }
 
@@ -145,6 +153,16 @@ export class LeadsService extends EntityService<CreateLeadDto, UpdateLeadDto> {
       where: { id: leadId },
       data: { status: 'CONVERTED', convertedAt: new Date() },
     });
+
+    this.eventBus
+      .publish(
+        new LeadConvertedEvent(
+          { leadId, target: dto.target, resultId: result.id },
+          tenantId,
+          _userId,
+        ),
+      )
+      .catch(() => {});
 
     return { success: true, target: dto.target, result };
   }

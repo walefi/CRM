@@ -45,10 +45,7 @@ export class TenantsController {
   @Put('current')
   @Roles('admin')
   @ApiOperation({ summary: 'Update current tenant (admin only)' })
-  update(
-    @CurrentUser('tenantId') tenantId: string,
-    @Body() dto: UpdateTenantDto,
-  ) {
+  update(@CurrentUser('tenantId') tenantId: string, @Body() dto: UpdateTenantDto) {
     return this.tenantsService.update(tenantId, dto);
   }
 

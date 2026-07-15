@@ -14,6 +14,13 @@ export function Badge({ className, variant = 'default', ...props }: BadgeProps) 
     warning: 'bg-warning text-warning-foreground',
   };
   return (
-    <div className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors', variants[variant], className)} {...props} />
+    <div
+      className={cn(
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors',
+        variants[variant],
+        className,
+      )}
+      {...props}
+    />
   );
 }

@@ -56,9 +56,7 @@ export default function Home() {
       <div className="p-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Bem-vindo, {user?.firstName}!
-          </p>
+          <p className="text-muted-foreground">Bem-vindo, {user?.firstName}!</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -102,8 +100,8 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              O sistema está em construção. Novas funcionalidades serão adicionadas
-              nas próximas etapas.
+              O sistema está em construção. Novas funcionalidades serão adicionadas nas próximas
+              etapas.
             </p>
             <div className="mt-6 flex gap-3">
               <Button>Ver Pipeline</Button>
@@ -121,9 +119,7 @@ function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
       <div className="w-full max-w-md px-4">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">
-            CRM Enterprise
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">CRM Enterprise</h1>
           <p className="mt-2 text-muted-foreground">
             Gestão completa de relacionamento com clientes
           </p>

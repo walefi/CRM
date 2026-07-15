@@ -1,5 +1,7 @@
 ﻿import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
+import { TaskCompletedEvent } from '../../infrastructure/event-bus/domain-events';
 import {
   CreateTaskDto,
   UpdateTaskDto,
@@ -9,7 +11,10 @@ import {
 
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventBus: EventBusService,
+  ) {}
 
   async findAllTasks(tenantId: string, filters: ActivityFilterDto) {
     const where: any = { tenantId, deletedAt: null };
@@ -109,9 +114,15 @@ export class TasksService {
     });
   }
 
-  async updateTask(id: string, tenantId: string, dto: UpdateTaskDto) {
+  async updateTask(id: string, tenantId: string, dto: UpdateTaskDto, userId?: string) {
     await this.findTaskById(id, tenantId);
-    return this.prisma.task.update({ where: { id }, data: dto });
+    const task = await this.prisma.task.update({ where: { id }, data: dto });
+
+    if (dto.status === 'DONE') {
+      this.eventBus.publish(new TaskCompletedEvent(task as any, tenantId, userId)).catch(() => {});
+    }
+
+    return task;
   }
 
   async removeTask(id: string, tenantId: string) {

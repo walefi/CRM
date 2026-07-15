@@ -5,6 +5,7 @@ import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
 import { QueueModule } from './infrastructure/queue/queue.module';
+import { EventBusModule } from './infrastructure/event-bus/event-bus.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -27,7 +28,12 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AutomationsModule } from './modules/automations/automations.module';
+import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
+import { ContractsModule } from './modules/contracts/contracts.module';
+import { SearchModule } from './modules/search/search.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { ObservabilityModule } from './infrastructure/observability/observability.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantGuard } from './common/guards/tenant.guard';
@@ -57,6 +63,7 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     }),
     CacheModule,
     QueueModule,
+    EventBusModule,
     ObservabilityModule,
     PrismaModule,
     HealthModule,
@@ -81,7 +88,12 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     IntegrationsModule,
     AiModule,
     AutomationsModule,
+    WorkflowsModule,
     QuotesModule,
+    ContractsModule,
+    SearchModule,
+    AnalyticsModule,
+    ReportsModule,
   ],
   providers: [
     {

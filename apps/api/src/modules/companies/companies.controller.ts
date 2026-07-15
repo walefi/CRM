@@ -57,10 +57,7 @@ export class CompaniesController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get company by ID' })
-  findById(
-    @Param('id') id: string,
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  findById(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
     return this.companiesService.findById(id, tenantId);
   }
 
@@ -91,10 +88,7 @@ export class CompaniesController {
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete company (admin only)' })
-  remove(
-    @Param('id') id: string,
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  remove(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
     return this.companiesService.remove(id, tenantId);
   }
 }

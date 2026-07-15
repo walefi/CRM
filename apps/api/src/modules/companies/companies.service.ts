@@ -1,12 +1,17 @@
 ﻿import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCompanyDto, UpdateCompanyDto, CompanySettingsDto } from './dto/companies.dto';
+import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
+import { CompanyCreatedEvent } from '../../infrastructure/event-bus/domain-events';
 
 @Injectable()
 export class CompaniesService {
   private readonly logger = new Logger(CompaniesService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventBus: EventBusService,
+  ) {}
 
   async findAll(tenantId: string) {
     return this.prisma.company.findMany({
@@ -92,6 +97,10 @@ export class CompaniesService {
     });
 
     this.logger.log(`Company "${company.name}" created in tenant ${tenantId}`);
+
+    this.eventBus
+      .publish(new CompanyCreatedEvent(company as any, tenantId, ownerId))
+      .catch(() => {});
 
     return company;
   }

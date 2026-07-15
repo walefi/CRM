@@ -12,8 +12,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Building2, Palette, Globe, Mail, Bell, Shield, Paperclip,
-  Save, Loader2, Upload,
+  Building2,
+  Palette,
+  Globe,
+  Mail,
+  Bell,
+  Shield,
+  Paperclip,
+  Save,
+  Loader2,
+  Upload,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
@@ -96,7 +104,10 @@ export default function SettingsPage() {
   }
 
   async function handleTestEmail() {
-    if (!testEmail) { toast.error('Informe um email'); return; }
+    if (!testEmail) {
+      toast.error('Informe um email');
+      return;
+    }
     try {
       await api.post('/company/test-email', { recipient: testEmail });
       toast.success('Email de teste enviado');
@@ -108,7 +119,15 @@ export default function SettingsPage() {
   if (!user) return null;
 
   return (
-    <AdminLayout user={{ firstName: user.firstName, lastName: user.lastName, email: user.email, avatar: user.avatar, role: user.role }}>
+    <AdminLayout
+      user={{
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar,
+        role: user.role,
+      }}
+    >
       <div className="p-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Configurações</h1>
@@ -117,13 +136,34 @@ export default function SettingsPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full justify-start overflow-x-auto">
-            <TabsTrigger value="general"><Building2 className="h-4 w-4 mr-2" />Geral</TabsTrigger>
-            <TabsTrigger value="branding"><Palette className="h-4 w-4 mr-2" />Identidade Visual</TabsTrigger>
-            <TabsTrigger value="regional"><Globe className="h-4 w-4 mr-2" />Regionalização</TabsTrigger>
-            <TabsTrigger value="smtp"><Mail className="h-4 w-4 mr-2" />E-mail</TabsTrigger>
-            <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />Notificações</TabsTrigger>
-            <TabsTrigger value="security"><Shield className="h-4 w-4 mr-2" />Segurança</TabsTrigger>
-            <TabsTrigger value="files"><Paperclip className="h-4 w-4 mr-2" />Arquivos</TabsTrigger>
+            <TabsTrigger value="general">
+              <Building2 className="h-4 w-4 mr-2" />
+              Geral
+            </TabsTrigger>
+            <TabsTrigger value="branding">
+              <Palette className="h-4 w-4 mr-2" />
+              Identidade Visual
+            </TabsTrigger>
+            <TabsTrigger value="regional">
+              <Globe className="h-4 w-4 mr-2" />
+              Regionalização
+            </TabsTrigger>
+            <TabsTrigger value="smtp">
+              <Mail className="h-4 w-4 mr-2" />
+              E-mail
+            </TabsTrigger>
+            <TabsTrigger value="notifications">
+              <Bell className="h-4 w-4 mr-2" />
+              Notificações
+            </TabsTrigger>
+            <TabsTrigger value="security">
+              <Shield className="h-4 w-4 mr-2" />
+              Segurança
+            </TabsTrigger>
+            <TabsTrigger value="files">
+              <Paperclip className="h-4 w-4 mr-2" />
+              Arquivos
+            </TabsTrigger>
           </TabsList>
 
           {/* General */}
@@ -131,10 +171,15 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Informações Gerais</CardTitle>
-                <CardDescription>Dados da empresa exibidos em propostas e documentos</CardDescription>
+                <CardDescription>
+                  Dados da empresa exibidos em propostas e documentos
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={generalForm.handleSubmit((d) => saveSection('general', d))} className="space-y-4">
+                <form
+                  onSubmit={generalForm.handleSubmit((d) => saveSection('general', d))}
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Nome da empresa</Label>
@@ -146,7 +191,10 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>CNPJ/CPF</Label>
-                      <Input placeholder="12.345.678/0001-90" {...generalForm.register('document')} />
+                      <Input
+                        placeholder="12.345.678/0001-90"
+                        {...generalForm.register('document')}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Telefone</Label>
@@ -172,7 +220,10 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Endereço</Label>
-                      <Input placeholder="Avenida Paulista, 1000" {...generalForm.register('street')} />
+                      <Input
+                        placeholder="Avenida Paulista, 1000"
+                        {...generalForm.register('street')}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Bairro</Label>
@@ -196,7 +247,11 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <Button type="submit" disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
                     Salvar
                   </Button>
                 </form>
@@ -212,7 +267,10 @@ export default function SettingsPage() {
                 <CardDescription>Personalize a aparência do sistema</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={brandingForm.handleSubmit((d) => saveSection('branding', d))} className="space-y-6">
+                <form
+                  onSubmit={brandingForm.handleSubmit((d) => saveSection('branding', d))}
+                  className="space-y-6"
+                >
                   <div className="space-y-4">
                     <div>
                       <Label>Logo</Label>
@@ -224,9 +282,16 @@ export default function SettingsPage() {
                           <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-md border hover:bg-accent">
                             <Upload className="h-4 w-4" />
                             Upload Logo
-                            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleLogoUpload}
+                            />
                           </label>
-                          <p className="text-xs text-muted-foreground mt-1">PNG ou SVG, máximo 2MB</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            PNG ou SVG, máximo 2MB
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -234,21 +299,36 @@ export default function SettingsPage() {
                       <div className="space-y-2">
                         <Label>Cor primária</Label>
                         <div className="flex gap-2">
-                          <Input type="color" className="w-16 h-10 p-1" {...brandingForm.register('primaryColor')} />
+                          <Input
+                            type="color"
+                            className="w-16 h-10 p-1"
+                            {...brandingForm.register('primaryColor')}
+                          />
                           <Input placeholder="#3B82F6" {...brandingForm.register('primaryColor')} />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label>Cor secundária</Label>
                         <div className="flex gap-2">
-                          <Input type="color" className="w-16 h-10 p-1" {...brandingForm.register('secondaryColor')} />
-                          <Input placeholder="#1D4ED8" {...brandingForm.register('secondaryColor')} />
+                          <Input
+                            type="color"
+                            className="w-16 h-10 p-1"
+                            {...brandingForm.register('secondaryColor')}
+                          />
+                          <Input
+                            placeholder="#1D4ED8"
+                            {...brandingForm.register('secondaryColor')}
+                          />
                         </div>
                       </div>
                     </div>
                   </div>
                   <Button type="submit" disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
                     Salvar
                   </Button>
                 </form>
@@ -264,7 +344,10 @@ export default function SettingsPage() {
                 <CardDescription>Configurações de idioma, moeda e formato</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={regionalForm.handleSubmit((d) => saveSection('regional', d))} className="space-y-4">
+                <form
+                  onSubmit={regionalForm.handleSubmit((d) => saveSection('regional', d))}
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Idioma</Label>
@@ -272,7 +355,10 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>Fuso horário</Label>
-                      <Input placeholder="America/Sao_Paulo" {...regionalForm.register('timezone')} />
+                      <Input
+                        placeholder="America/Sao_Paulo"
+                        {...regionalForm.register('timezone')}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Formato de data</Label>
@@ -288,11 +374,20 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>Primeiro dia da semana</Label>
-                      <Input type="number" min="0" max="6" {...regionalForm.register('firstDayOfWeek')} />
+                      <Input
+                        type="number"
+                        min="0"
+                        max="6"
+                        {...regionalForm.register('firstDayOfWeek')}
+                      />
                     </div>
                   </div>
                   <Button type="submit" disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
                     Salvar
                   </Button>
                 </form>
@@ -308,7 +403,10 @@ export default function SettingsPage() {
                 <CardDescription>Servidor SMTP para envio de emails transacionais</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={smtpForm.handleSubmit((d) => saveSection('smtp', d))} className="space-y-4">
+                <form
+                  onSubmit={smtpForm.handleSubmit((d) => saveSection('smtp', d))}
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Host SMTP</Label>
@@ -320,11 +418,18 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>Usuário</Label>
-                      <Input placeholder="notifications@acme.com" {...smtpForm.register('smtpUser')} />
+                      <Input
+                        placeholder="notifications@acme.com"
+                        {...smtpForm.register('smtpUser')}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Senha</Label>
-                      <Input type="password" placeholder="••••••••" {...smtpForm.register('smtpPassword')} />
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        {...smtpForm.register('smtpPassword')}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Nome do remetente</Label>
@@ -332,20 +437,31 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>E-mail remetente</Label>
-                      <Input placeholder="no-reply@acme.com" {...smtpForm.register('senderEmail')} />
+                      <Input
+                        placeholder="no-reply@acme.com"
+                        {...smtpForm.register('senderEmail')}
+                      />
                     </div>
                   </div>
                   <div className="flex gap-2 items-end">
                     <div className="space-y-2 flex-1">
                       <Label>Email para teste</Label>
-                      <Input placeholder="test@example.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} />
+                      <Input
+                        placeholder="test@example.com"
+                        value={testEmail}
+                        onChange={(e) => setTestEmail(e.target.value)}
+                      />
                     </div>
                     <Button type="button" variant="outline" onClick={handleTestEmail}>
                       Testar conexão
                     </Button>
                   </div>
                   <Button type="submit" disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
                     Salvar
                   </Button>
                 </form>
@@ -355,13 +471,28 @@ export default function SettingsPage() {
 
           {/* Placeholders */}
           <TabsContent value="notifications">
-            <Card><CardHeader><CardTitle>Notificações</CardTitle><CardDescription>Em desenvolvimento</CardDescription></CardHeader></Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Notificações</CardTitle>
+                <CardDescription>Em desenvolvimento</CardDescription>
+              </CardHeader>
+            </Card>
           </TabsContent>
           <TabsContent value="security">
-            <Card><CardHeader><CardTitle>Segurança</CardTitle><CardDescription>Em desenvolvimento</CardDescription></CardHeader></Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Segurança</CardTitle>
+                <CardDescription>Em desenvolvimento</CardDescription>
+              </CardHeader>
+            </Card>
           </TabsContent>
           <TabsContent value="files">
-            <Card><CardHeader><CardTitle>Arquivos</CardTitle><CardDescription>Em desenvolvimento</CardDescription></CardHeader></Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Arquivos</CardTitle>
+                <CardDescription>Em desenvolvimento</CardDescription>
+              </CardHeader>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

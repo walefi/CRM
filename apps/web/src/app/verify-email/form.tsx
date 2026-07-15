@@ -51,9 +51,7 @@ export default function VerifyEmailForm() {
             <>
               <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
               <CardTitle>Falha na verificação</CardTitle>
-              <CardDescription>
-                O link de verificação é inválido ou expirou.
-              </CardDescription>
+              <CardDescription>O link de verificação é inválido ou expirou.</CardDescription>
             </>
           )}
         </CardHeader>

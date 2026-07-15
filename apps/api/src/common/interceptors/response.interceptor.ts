@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { getRequestContext } from '../../infrastructure/observability/logging/app-logger.service';
@@ -18,10 +13,7 @@ interface SuccessResponse<T> {
 
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, SuccessResponse<T>> {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<SuccessResponse<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<SuccessResponse<T>> {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
     const reqCtx = getRequestContext();

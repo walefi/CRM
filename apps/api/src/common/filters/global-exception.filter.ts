@@ -113,7 +113,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof Error) {
       return {
         ...base,
-        message: process.env.NODE_ENV === 'production' ? 'Internal server error' : exception.message,
+        message:
+          process.env.NODE_ENV === 'production' ? 'Internal server error' : exception.message,
         code: 'INTERNAL_ERROR',
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
