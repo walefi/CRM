@@ -1,10 +1,15 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const hashedPassword = await bcrypt.hash('Admin@123', 12);
+  const hashedPassword = await argon2.hash('Admin@123', {
+    type: argon2.argon2id,
+    memoryCost: 65536,
+    timeCost: 3,
+    parallelism: 4,
+  });
 
   const tenant = await prisma.tenant.upsert({
     where: { slug: 'default' },

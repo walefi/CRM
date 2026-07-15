@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -212,6 +213,11 @@ export function LoginForm() {
             {loginForm.formState.errors.password && (
               <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
             )}
+          </div>
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+              Esqueci minha senha
+            </Link>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

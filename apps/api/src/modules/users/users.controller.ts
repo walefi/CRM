@@ -1,42 +1,49 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
-  Body,
-  HttpCode,
-  HttpStatus,
-  UseGuards,
+  Controller, Get, Post, Patch, Delete, Param, Body, Query,
+  HttpCode, HttpStatus, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from './dto/users.dto';
+import { CreateUserDto, UpdateUserDto, UpdateProfileDto, UserFilterDto } from './dto/users.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Users')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all users in tenant' })
-  findAll(@CurrentUser('tenantId') tenantId: string) {
-    return this.usersService.findAll(tenantId);
+  @ApiOperation({ summary: 'List users with filters, pagination and search' })
+  findAll(
+    @CurrentUser('tenantId') tenantId: string,
+    @Query() filters: UserFilterDto,
+  ) {
+    return this.usersService.findAll(tenantId, filters);
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  getProfile(@CurrentUser('id') userId: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.usersService.findById(userId, tenantId);
+  }
+
+  @Patch('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update current user profile' })
+  updateProfile(@CurrentUser('id') userId: string, @Body() dto: UpdateProfileDto) {
+    return this.usersService.updateProfile(userId, dto);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
-  findById(
-    @Param('id') id: string,
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  findById(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
     return this.usersService.findById(id, tenantId);
   }
 
@@ -51,7 +58,35 @@ export class UsersController {
     return this.usersService.create(tenantId, dto);
   }
 
-  @Put(':id')
+  @Post('invite')
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Invite a new user (admin only)' })
+  invite(
+    @Body('email') email: string,
+    @Body('role') role: string,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    return this.usersService.invite(tenantId, email, role);
+  }
+
+  @Post('invite/:id/resend')
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend invitation (admin only)' })
+  resendInvite(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.usersService.resendInvite(id, tenantId);
+  }
+
+  @Delete('invite/:id')
+  @Roles('admin')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Cancel invitation (admin only)' })
+  cancelInvite(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.usersService.cancelInvite(id, tenantId);
+  }
+
+  @Patch(':id')
   @Roles('admin')
   @ApiOperation({ summary: 'Update user (admin only)' })
   update(
@@ -66,10 +101,7 @@ export class UsersController {
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete user (admin only)' })
-  remove(
-    @Param('id') id: string,
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  remove(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
     return this.usersService.remove(id, tenantId);
   }
 }

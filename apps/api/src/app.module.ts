@@ -1,15 +1,38 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
+import { CacheModule } from './infrastructure/cache/cache.module';
+import { QueueModule } from './infrastructure/queue/queue.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
+import { TeamsModule } from './modules/teams/teams.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
+import { CompaniesModule } from './modules/companies/companies.module';
+import { CompanySettingsModule } from './modules/company-settings/company-settings.module';
+import { CustomFieldsModule } from './modules/custom-fields/custom-fields.module';
+import { ContactsModule } from './modules/contacts/contacts.module';
+import { LeadsModule } from './modules/leads/leads.module';
+import { PipelinesModule } from './modules/pipelines/pipelines.module';
+import { DealsModule } from './modules/deals/deals.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
+import { AiModule } from './modules/ai/ai.module';
+import { AutomationsModule } from './modules/automations/automations.module';
+import { ObservabilityModule } from './infrastructure/observability/observability.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { TenantGuard } from './common/guards/tenant.guard';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import { RequestContextMiddleware } from './common/middlewares/request-context.middleware';
 
 @Module({
   imports: [
@@ -29,11 +52,30 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
         ],
       }),
     }),
+    CacheModule,
+    QueueModule,
+    ObservabilityModule,
     PrismaModule,
     HealthModule,
     AuthModule,
     UsersModule,
     TenantsModule,
+    TeamsModule,
+    DepartmentsModule,
+    RolesModule,
+    PermissionsModule,
+    CompaniesModule,
+    CompanySettingsModule,
+    CustomFieldsModule,
+    ContactsModule,
+    LeadsModule,
+    PipelinesModule,
+    DealsModule,
+    TasksModule,
+    NotificationsModule,
+    IntegrationsModule,
+    AiModule,
+    AutomationsModule,
   ],
   providers: [
     {
@@ -45,6 +87,10 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       useClass: JwtAuthGuard,
     },
     {
+      provide: APP_GUARD,
+      useClass: TenantGuard,
+    },
+    {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
@@ -52,6 +98,18 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TimeoutInterceptor,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestContextMiddleware).forRoutes('*');
+  }
+}
