@@ -22,6 +22,10 @@
 - [x] Etapa 26 - Reporting Engine (Enterprise Reports)
 - [x] Etapa 27 - Integration Hub (Unified Integration Platform)
 - [x] Etapa 28 - AI Platform (Enterprise AI Engine)
+- [x] Etapa 29 - Omnichannel Communication Platform
+- [x] Etapa 30 - Customer Service Platform (Help Desk)
+- [x] Etapa 31 - Customer Portal (Self-Service Platform)
+- [x] Etapa 32 - Unified Timeline Engine (Timeline 360°)
 
 ---
 

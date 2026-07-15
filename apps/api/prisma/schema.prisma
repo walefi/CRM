@@ -454,6 +454,11 @@ model Tenant {
   AIAgent          AIAgent[]
   AIEmbedding      AIEmbedding[]
   AIUsage          AIUsage[]
+  ConversationQueue ConversationQueue[]
+  MessageTemplate  MessageTemplate[]
+  Ticket           Ticket[]
+  KnowledgeArticle KnowledgeArticle[]
+  TimelineBookmark TimelineBookmark[]
 
   @@index([slug])
   @@index([status])
@@ -1323,21 +1328,34 @@ model Note {
 }
 
 model Timeline {
-  id        String   @id @default(uuid())
-  action    String
-  entity    String
-  entityId  String
-  metadata  Json?
-  tenantId  String
-  userId    String
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  module      String   @default("system")
+  action      String
+  entity      String
+  entityId    String
+  eventType   String   @default("generic")
+  correlationId String?
+  summary     String?
+  payload     Json?
+  metadata    Json?
+  ip          String?
+  device      String?
+  tenantId    String
+  userId      String?
+  createdAt   DateTime @default(now())
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant      Tenant              @relation(fields: [tenantId], references: [id])
+  user        User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  comments    TimelineComment[]
+  attachments TimelineAttachment[]
+  reactions   TimelineReaction[]
 
   @@index([tenantId])
   @@index([entity, entityId])
+  @@index([module])
+  @@index([eventType])
   @@index([userId])
+  @@index([correlationId])
   @@index([createdAt])
   @@map("timelines")
 }
@@ -1349,6 +1367,7 @@ model History {
   field     String
   oldValue  String?
   newValue  String?
+  module    String   @default("system")
   tenantId  String
   userId    String
   createdAt DateTime @default(now())
@@ -1358,8 +1377,71 @@ model History {
 
   @@index([tenantId])
   @@index([entity, entityId])
+  @@index([module])
   @@index([createdAt])
   @@map("histories")
+}
+
+model TimelineComment {
+  id         String   @id @default(uuid())
+  timelineId String
+  content    String
+  userId     String
+  replyToId  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  timeline Timeline           @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  replyTo  TimelineComment?   @relation("CommentReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies  TimelineComment[]  @relation("CommentReplies")
+
+  @@index([timelineId])
+  @@map("timeline_comments")
+}
+
+model TimelineAttachment {
+  id         String   @id @default(uuid())
+  timelineId String
+  name       String
+  url        String
+  size       Int?
+  mimeType   String?
+  type       String   @default("file")
+  createdAt  DateTime @default(now())
+
+  timeline Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+
+  @@index([timelineId])
+  @@map("timeline_attachments")
+}
+
+model TimelineReaction {
+  id         String   @id @default(uuid())
+  timelineId String
+  userId     String
+  reaction   String
+  createdAt  DateTime @default(now())
+
+  timeline Timeline @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+
+  @@unique([timelineId, userId, reaction])
+  @@index([timelineId])
+  @@map("timeline_reactions")
+}
+
+model TimelineBookmark {
+  id         String   @id @default(uuid())
+  timelineId String
+  userId     String
+  tenantId   String
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([timelineId, userId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("timeline_bookmarks")
 }
 
 // ═══════════════════════════════════════
@@ -1537,45 +1619,74 @@ model Attachment {
 // ═══════════════════════════════════════
 
 model Conversation {
-  id        String      @id @default(uuid())
-  subject   String?
-  channel   ChannelType
-  status    String      @default("active")
-  tenantId  String
-  userId    String?
-  contactId String?
-  dealId    String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id          String      @id @default(uuid())
+  subject     String?
+  channel     ChannelType
+  status      String      @default("active")
+  priority    String      @default("normal")
+  tags        String[]
+  unreadCount Int         @default(0)
+  lastMessageAt DateTime?
+  lastMessagePreview String?
+  assignedToId  String?
+  teamId        String?
+  queueId       String?
+  slaStatus     String      @default("in_time")
+  firstResponseAt DateTime?
+  resolvedAt   DateTime?
+  metadata     Json?
+  tenantId     String
+  userId       String?
+  contactId    String?
+  dealId       String?
+  companyId    String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id])
-  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  contact  Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  deal     Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
-  messages Message[]
+  tenant       Tenant                     @relation(fields: [tenantId], references: [id])
+  user         User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contact      Contact?                   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal         Deal?                      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  messages     Message[]
+  notes        ConversationNote[]
+  assignments  ConversationAssignment[]
+  participants ConversationParticipant[]
 
   @@index([tenantId])
   @@index([userId])
   @@index([contactId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([queueId])
   @@index([updatedAt])
   @@map("conversations")
 }
 
 model Message {
   id             String           @id @default(uuid())
-  content        String
+  content        String?
   direction      MessageDirection @default(INBOUND)
   channel        ChannelType
+  messageType    String           @default("text")
   externalId     String?
   metadata       Json?
+  replyToId      String?
   conversationId String
   senderId       String?
+  senderName     String?
+  status         String           @default("sent")
+  readAt         DateTime?
+  deliveredAt    DateTime?
   tenantId       String
   createdAt      DateTime         @default(now())
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User?        @relation("SenderMessages", fields: [senderId], references: [id], onDelete: SetNull)
-  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+  conversation Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User?              @relation("SenderMessages", fields: [senderId], references: [id], onDelete: SetNull)
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  attachments  MessageAttachment[]
+  reactions    MessageReaction[]
+  replyTo      Message?           @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      Message[]          @relation("MessageReplies")
 
   @@index([conversationId])
   @@index([tenantId])
@@ -1588,7 +1699,12 @@ model Channel {
   type        ChannelType
   name        String
   credentials Json?
+  config      Json?
   isActive    Boolean     @default(true)
+  isConnected Boolean     @default(false)
+  webhookUrl  String?
+  webhookSecret String?
+  healthScore String      @default("unknown")
   tenantId    String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -1598,6 +1714,245 @@ model Channel {
   @@unique([type, tenantId])
   @@index([tenantId])
   @@map("channels")
+}
+
+model ConversationParticipant {
+  id             String   @id @default(uuid())
+  conversationId String
+  userId         String?
+  role           String   @default("member")
+  joinedAt       DateTime @default(now())
+  leftAt         DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([conversationId])
+  @@map("conversation_participants")
+}
+
+model ConversationQueue {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  strategy    String   @default("round_robin")
+  maxWaitTime Int      @default(300)
+  isActive    Boolean  @default(true)
+  tenantId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant                  @relation(fields: [tenantId], references: [id])
+  assignments ConversationAssignment[]
+
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("conversation_queues")
+}
+
+model ConversationAssignment {
+  id             String   @id @default(uuid())
+  conversationId String
+  userId         String
+  queueId        String?
+  status         String   @default("pending")
+  assignedAt     DateTime @default(now())
+  acceptedAt     DateTime?
+  completedAt    DateTime?
+
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  queue        ConversationQueue? @relation(fields: [queueId], references: [id])
+
+  @@index([conversationId])
+  @@index([userId])
+  @@index([queueId])
+  @@index([status])
+  @@map("conversation_assignments")
+}
+
+model MessageAttachment {
+  id        String   @id @default(uuid())
+  messageId String
+  type      String   @default("image")
+  url       String
+  name      String?
+  size      Int?
+  mimeType  String?
+  thumbnail String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_attachments")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@map("message_reactions")
+}
+
+model MessageTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  content   String
+  category  String?
+  channel   ChannelType?
+  variables Json?
+  isActive  Boolean  @default(true)
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([category])
+  @@map("message_templates")
+}
+
+model ConversationNote {
+  id             String   @id @default(uuid())
+  conversationId String
+  content        String
+  userId         String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("conversation_notes")
+}
+
+// ═══════════════════════════════════════
+// HELP DESK
+// ═══════════════════════════════════════
+
+model Ticket {
+  id              String   @id @default(uuid())
+  subject         String
+  description     String?
+  status          String   @default("new")
+  priority        String   @default("normal")
+  type            String   @default("support")
+  category        String?
+  queue           String   @default("support_n1")
+  channel         String?
+  tags            String[]
+  assignedToId    String?
+  teamId          String?
+  contactId       String?
+  companyId       String?
+  dealId          String?
+  conversationId  String?
+  slaStatus       String   @default("in_time")
+  slaDeadline     DateTime?
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  reopenedCount   Int      @default(0)
+  satisfaction    Int?
+  metadata        Json?
+  tenantId        String
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  comments    TicketComment[]
+  history     TicketHistory[]
+  attachments TicketAttachment[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([priority])
+  @@index([queue])
+  @@index([assignedToId])
+  @@index([createdAt])
+  @@map("tickets")
+}
+
+model TicketComment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  content   String
+  isInternal Boolean @default(false)
+  userId    String?
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+  @@map("ticket_comments")
+}
+
+model TicketHistory {
+  id        String   @id @default(uuid())
+  ticketId  String
+  field     String?
+  oldValue  String?
+  newValue  String?
+  action    String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+  @@map("ticket_history")
+}
+
+model TicketAttachment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  name      String
+  url       String
+  size      Int?
+  mimeType  String?
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("ticket_attachments")
+}
+
+model KnowledgeArticle {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  category    String?
+  tags        String[]
+  status      String   @default("published")
+  viewCount   Int      @default(0)
+  helpfulCount Int     @default(0)
+  notHelpfulCount Int  @default(0)
+  isInternal  Boolean  @default(false)
+  metadata    Json?
+  tenantId    String
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([category])
+  @@index([status])
+  @@index([title])
+  @@map("knowledge_articles")
 }
 
 // ═══════════════════════════════════════

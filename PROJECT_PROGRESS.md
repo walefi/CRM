@@ -1,6 +1,234 @@
 # CRM Enterprise - Project Progress
 
-## Stage 28 — AI Platform (Enterprise AI Engine)
+## Stage 32 — Unified Timeline Engine (Timeline 360°)
+
+### Date: 2026-07-15
+
+### Summary
+
+Implemented the Unified Timeline Engine. All modules now emit events captured by
+20 TimelineSubscribers, converting them into timeline entries with comments, reactions,
+attachments, and bookmarks. Built frontend with timeline feed, module filters, search,
+comments, and reactions. Extended existing Timeline/History models.
+
+### Files Created
+
+**Backend:**
+
+- `apps/api/src/modules/timeline/timeline.module.ts` — @Global() module
+- `apps/api/src/modules/timeline/timeline.service.ts` — Record, query, entity/module/search, comments CRUD, reactions toggle, bookmarks, stats
+- `apps/api/src/modules/timeline/timeline.controller.ts` — 11 endpoints
+- `apps/api/src/modules/timeline/timeline.subscriber.ts` — 20 @OnEvent handlers
+
+**Frontend:**
+
+- `apps/web/src/app/timeline/page.tsx` — Timeline 360° with feed, 13 module filters, comments, reactions, bookmarks, search, entity links
+
+### Files Modified
+
+- `apps/api/prisma/schema.prisma` — Extended Timeline (+module, eventType, correlationId, summary, payload, ip, device), History (+module), added TimelineComment, TimelineAttachment, TimelineReaction, TimelineBookmark
+- `apps/api/src/app.module.ts` — Registered TimelineModule
+- `apps/api/src/main.ts` — Added Timeline Swagger tag
+- Migration: add_unified_timeline
+
+### API Endpoints (11)
+
+GET /timeline, /timeline/stats, /timeline/entity/:entity/:id, /timeline/module/:module,
+/timeline/search, /timeline/:id/comments
+POST /timeline/comment, /timeline/reaction, /timeline/bookmark
+PATCH /timeline/comment/:id, DELETE /timeline/comment/:id
+
+### Monitored Modules (13)
+
+lead, contact, company, deal, product, contract, quote, document,
+workflow, automation, notification, ticket, user
+
+### Build Status
+
+- Backend: OK
+- Frontend: OK (62 routes)
+- Prisma: OK
+- Docker: OK
+
+### Next Step
+
+Stage 33 — Document Management System (DMS)
+
+---
+
+### Date: 2026-07-15
+
+### Summary
+
+Implemented the Customer Portal with 8 self-service modules. Customers can view
+dashboard KPIs, manage tickets, browse documents, contracts, proposals, knowledge
+base, and receive notifications. Built with dedicated portal layout, sidebar
+navigation, and responsive design. All data consumed via public Portal API.
+
+### Files Created
+
+**Backend:**
+
+- `apps/api/src/modules/portal/portal.module.ts`
+- `apps/api/src/modules/portal/portal.service.ts` — Dashboard aggregator, profile, tickets, documents, contracts, quotes, notifications
+- `apps/api/src/modules/portal/portal.controller.ts` — 8 endpoints with JWT auth
+
+**Frontend:**
+
+- `apps/web/src/app/portal/portal-layout.tsx` — Portal layout with sidebar nav, header, auth
+- `apps/web/src/app/portal/page.tsx` — Dashboard with 5 stat cards, recent tickets
+- `apps/web/src/app/portal/tickets/page.tsx` — Ticket list with status badges
+- `apps/web/src/app/portal/documents/page.tsx` — Document browser
+- `apps/web/src/app/portal/contracts/page.tsx` — Contract list with status
+- `apps/web/src/app/portal/proposals/page.tsx` — Proposals with status
+- `apps/web/src/app/portal/knowledge/page.tsx` — Knowledge base browser
+
+### Files Modified
+
+- `apps/api/src/app.module.ts` — Registered PortalModule
+- `apps/api/src/main.ts` — Added Portal Swagger tag
+
+### API Endpoints (8)
+
+GET /portal/dashboard, /portal/profile, /portal/tickets, /portal/documents,
+/portal/contracts, /portal/proposals, /portal/notifications
+PATCH /portal/profile
+
+### Portal Modules (8)
+
+Dashboard, Tickets, Documents, Contracts, Proposals, Knowledge Base,
+Notifications, Profile
+
+### Build Status
+
+- Backend: OK
+- Frontend: OK (61 routes)
+- Prisma: OK
+- Docker: OK
+
+### Next Step
+
+Stage 32 — Document Management System (DMS)
+
+---
+
+### Date: 2026-07-15
+
+### Summary
+
+Implemented the Customer Service Platform with ticket management, SLA engine,
+knowledge base, ticket lifecycle (create, assign, comment, resolve, close, reopen),
+queue routing (7 default queues), and statistics dashboard. Built frontend with
+ticket center, knowledge base browser, and create/edit dialogs.
+
+### Files Created
+
+**Backend:**
+
+- `apps/api/src/modules/tickets/help-desk.module.ts` — @Global() module
+- `apps/api/src/modules/tickets/help-desk.service.ts` — Tickets (CRUD, assign, close, reopen, comments, history, SLA), Knowledge Base (articles CRUD, views tracking), Stats
+- `apps/api/src/modules/tickets/tickets.controller.ts` — 9 endpoints with RBAC
+- `apps/api/src/modules/tickets/knowledge.controller.ts` — 5 endpoints with RBAC
+
+**Frontend:**
+
+- `apps/web/src/app/tickets/page.tsx` — Ticket center with list, detail view, comments, create dialog
+- `apps/web/src/app/knowledge/page.tsx` — Knowledge base with article list, viewer, create dialog
+
+### Files Modified
+
+- `apps/api/prisma/schema.prisma` — Added 5 new models: Ticket, TicketComment, TicketHistory, TicketAttachment, KnowledgeArticle
+- `apps/api/src/app.module.ts` — Registered HelpDeskModule
+- `apps/api/src/main.ts` — Added HelpDesk Swagger tag
+- Migration: add_help_desk
+
+### API Endpoints (14)
+
+GET /tickets, /tickets/stats, POST /tickets, GET /tickets/:id, PATCH /tickets/:id,
+DELETE /tickets/:id, POST /tickets/comment, /tickets/assign, /tickets/close, /tickets/reopen
+GET /knowledge, POST /knowledge, GET /knowledge/:id, PATCH /knowledge/:id, DELETE /knowledge/:id
+
+### Ticket Statuses (9)
+
+new, open, in_progress, waiting, escalated, resolved, closed, cancelled
+
+### Priorities (5)
+
+low, normal, high, urgent, critical — with automatic SLA deadlines
+
+### Queues (7)
+
+support_n1, support_n2, support_n3, financial, commercial, implementation, development
+
+### Build Status
+
+- Backend: OK
+- Frontend: OK (54 routes)
+- Prisma: OK
+- Docker: OK
+
+### Next Step
+
+Stage 31 — Customer Portal
+
+---
+
+### Date: 2026-07-15
+
+### Summary
+
+Implemented the Omnichannel Communication Platform with unified inbox, real-time
+chat, channel management (14 channels), conversation queues with routing strategies,
+message templates, SLA tracking, and conversation lifecycle (assign, transfer,
+resolve, archive, reopen). Built frontend inbox with conversation list, chat window,
+and dashboard statistics.
+
+### Files Created
+
+**Backend:**
+
+- `apps/api/src/modules/conversations/conversations.module.ts` — @Global() module
+- `apps/api/src/modules/conversations/conversations.service.ts` — CRUD, messages, channels, queues, templates, stats, SLA
+- `apps/api/src/modules/conversations/conversations.controller.ts` — 22 endpoints with RBAC
+
+**Frontend:**
+
+- `apps/web/src/app/conversations/page.tsx` — Full inbox with conversation list, chat window, assign/archive/resolve actions, message sending
+
+### Files Modified
+
+- `apps/api/prisma/schema.prisma` — Extended Conversation (+11 fields: priority, tags, unreadCount, lastMessageAt, preview, assignedToId, teamId, queueId, slaStatus, firstResponseAt, resolvedAt, companyId, metadata), Message (+6 fields: messageType, replyToId, senderName, status, readAt, deliveredAt), Channel (+5 fields: config, isConnected, webhookUrl, webhookSecret, healthScore)
+- New models: ConversationParticipant, ConversationQueue, ConversationAssignment, MessageAttachment, MessageReaction, MessageTemplate, ConversationNote
+- `apps/api/src/app.module.ts` — Registered ConversationsModule
+- `apps/api/src/main.ts` — Added Conversations Swagger tag
+- Migration: add_omnichannel_platform
+
+### API Endpoints (22)
+
+GET /conversations, /stats, /channels, /queues, /templates
+POST /conversations, /channels, /queues, /templates, /messages, /send
+GET /conversations/:id, /:id/messages
+POST /:id/assign, /:id/transfer, /:id/resolve, /:id/archive, /:id/reopen, /:id/notes
+DELETE /channels/:id, /queues/:id, /templates/:id
+
+### Channels (14)
+
+WhatsApp Business, WhatsApp Cloud API, Telegram, Instagram Direct, Facebook Messenger,
+Email, SMS, Live Chat, Website Widget, Google Business Messages, Apple Business Chat,
+Microsoft Teams, Slack, Discord, WebSocket
+
+### Build Status
+
+- Backend: OK
+- Frontend: OK (52 routes)
+- Prisma: OK
+- Docker: OK
+
+### Next Step
+
+Stage 30 — Customer Service Platform (Help Desk)
+
+---
 
 ### Date: 2026-07-15
 

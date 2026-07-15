@@ -27,6 +27,10 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AiModule } from './modules/ai/ai.module';
+import { ConversationsModule } from './modules/conversations/conversations.module';
+import { HelpDeskModule } from './modules/tickets/help-desk.module';
+import { PortalModule } from './modules/portal/portal.module';
+import { TimelineModule } from './modules/timeline/timeline.module';
 import { AutomationsModule } from './modules/automations/automations.module';
 import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
@@ -87,6 +91,10 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     NotificationsModule,
     IntegrationsModule,
     AiModule,
+    ConversationsModule,
+    HelpDeskModule,
+    PortalModule,
+    TimelineModule,
     AutomationsModule,
     WorkflowsModule,
     QuotesModule,
