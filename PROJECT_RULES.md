@@ -36,7 +36,7 @@ Nunca quebre funcionalidades existentes.
 
 Caso alguma alteração possa causar regressão, proponha uma solução antes de implementá-la.
 
-------------------------------------------------------------
+---
 
 # TECNOLOGIAS
 
@@ -92,7 +92,7 @@ CI/CD
 
 Kubernetes (estrutura preparada)
 
-------------------------------------------------------------
+---
 
 # ARQUITETURA
 
@@ -124,7 +124,7 @@ Baixo acoplamento
 
 Alta coesão
 
-------------------------------------------------------------
+---
 
 # PADRÕES
 
@@ -156,7 +156,7 @@ Testes
 
 Documentação
 
-------------------------------------------------------------
+---
 
 # CÓDIGO
 
@@ -170,7 +170,7 @@ Nunca utilizar comentários como "implementar depois".
 
 Toda funcionalidade deverá estar pronta.
 
-------------------------------------------------------------
+---
 
 # QUALIDADE
 
@@ -192,7 +192,7 @@ Seguir Prettier
 
 Ser facilmente escalável
 
-------------------------------------------------------------
+---
 
 # SEGURANÇA
 
@@ -226,7 +226,7 @@ Proteção contra XSS
 
 Proteção contra CSRF quando aplicável
 
-------------------------------------------------------------
+---
 
 # BANCO
 
@@ -248,7 +248,7 @@ Soft Delete
 
 Auditoria
 
-------------------------------------------------------------
+---
 
 # TESTES
 
@@ -262,7 +262,7 @@ Mocks
 
 Cobertura mínima de 80%
 
-------------------------------------------------------------
+---
 
 # DOCUMENTAÇÃO
 
@@ -274,7 +274,7 @@ Documentar novas APIs.
 
 Documentar novas variáveis de ambiente.
 
-------------------------------------------------------------
+---
 
 # PERFORMANCE
 
@@ -292,7 +292,7 @@ Consultas Otimizadas
 
 Índices
 
-------------------------------------------------------------
+---
 
 # FRONTEND
 
@@ -310,7 +310,7 @@ Animações suaves.
 
 Acessibilidade.
 
-------------------------------------------------------------
+---
 
 # PROIBIÇÕES
 
@@ -328,7 +328,7 @@ Nunca ignorar erros.
 
 Nunca deixar código incompleto.
 
-------------------------------------------------------------
+---
 
 # AO FINAL DE CADA ETAPA
 
@@ -357,7 +357,6 @@ Executar checklist:
 Depois aguardar a próxima etapa.
 
 Nunca avance automaticamente para outra etapa.
-
 
 Você é um Engenheiro de Software Sênior, Arquiteto de Sistemas e Especialista em CRM.
 
@@ -1069,7 +1068,6 @@ Documentação
 Deploy para produção (Docker/Kubernetes)
 CI/CD
 
-
 AO FINAL DE CADA ETAPA TESTE E VERIFIQUE SE TUDO ESTA FUNCIONANDO PERFEITAMENTE.
 INSTALE QUALQUER PENDENCIA QUE PRECISAR
 
@@ -1108,3 +1106,5 @@ Nunca esperar várias etapas para criar a interface.
 # Capturas de tela
 
 Gere capturas de tela (screenshots) do sistema ao final de cada implementação (por exemplo, da página de login, do dashboard e dos novos módulos).
+
+# Ao final de cada etapa deve preencher o arquivo PROJECT_PROGRESS.md com o que foi feito, erros encontrados e soluções, e em qual etapa que está atualmente

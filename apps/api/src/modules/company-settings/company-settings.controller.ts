@@ -1,14 +1,26 @@
 import {
-  Controller, Get, Patch, Post, Delete, Body, Req,
-  UseGuards, HttpCode, HttpStatus, UseInterceptors, UploadedFile,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Delete,
+  Body,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
-import { Request } from 'express';
 import { CompanySettingsService } from './company-settings.service';
 import {
-  CompanySettingsDto, SmtpSettingsDto, NotificationSettingsDto,
-  SecuritySettingsDto, FileSettingsDto, TestEmailDto,
+  CompanySettingsDto,
+  SmtpSettingsDto,
+  NotificationSettingsDto,
+  SecuritySettingsDto,
+  FileSettingsDto,
+  TestEmailDto,
 } from './dto/settings.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
@@ -60,7 +72,10 @@ export class CompanySettingsController {
   @Patch('settings/notifications')
   @Roles('admin')
   @ApiOperation({ summary: 'Update notification settings (admin)' })
-  updateNotifications(@CurrentUser('tenantId') tenantId: string, @Body() dto: NotificationSettingsDto) {
+  updateNotifications(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: NotificationSettingsDto,
+  ) {
     return this.settingsService.updateSettings(tenantId, 'notifications', dto);
   }
 

@@ -2,17 +2,19 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { TenantContext } from '../modules/tenants/tenant-context.service';
 
-type ModelDelegate<T> = {
-  findUnique: Function;
-  findFirst: Function;
-  findMany: Function;
-  create: Function;
-  update: Function;
-  delete: Function;
-  count: Function;
+type AnyFunction = (...args: any[]) => any;
+
+type ModelDelegate = {
+  findUnique: AnyFunction;
+  findFirst: AnyFunction;
+  findMany: AnyFunction;
+  create: AnyFunction;
+  update: AnyFunction;
+  delete: AnyFunction;
+  count: AnyFunction;
 };
 
-export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
+export class BaseRepository<Model, Delegate extends ModelDelegate> {
   protected readonly logger = new Logger(this.constructor.name);
 
   constructor(
@@ -26,9 +28,7 @@ export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
     return { tenantId: this.tenantContext.currentId };
   }
 
-  protected mergeWhere(
-    where?: Record<string, unknown>,
-  ): Record<string, unknown> {
+  protected mergeWhere(where?: Record<string, unknown>): Record<string, unknown> {
     const tenantFilter = this.getTenantFilter();
     if (!tenantFilter || Object.keys(tenantFilter).length === 0) return where || {};
     return { ...where, ...tenantFilter };
@@ -36,13 +36,13 @@ export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
 
   async findById(id: string): Promise<Model | null> {
     const tenantFilter = this.getTenantFilter();
-    return (this.delegate.findUnique as Function)({
+    return this.delegate.findUnique({
       where: { id, ...tenantFilter },
     }) as Promise<Model | null>;
   }
 
   async findOne(where: Record<string, unknown>): Promise<Model | null> {
-    return (this.delegate.findFirst as Function)({
+    return this.delegate.findFirst({
       where: this.mergeWhere(where),
     }) as Promise<Model | null>;
   }
@@ -55,7 +55,7 @@ export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
     include?: Record<string, unknown>;
     select?: Record<string, unknown>;
   }): Promise<Model[]> {
-    return (this.delegate.findMany as Function)({
+    return this.delegate.findMany({
       ...(options || {}),
       where: this.mergeWhere(options?.where),
     }) as Promise<Model[]>;
@@ -63,14 +63,14 @@ export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
 
   async create(data: Record<string, unknown>): Promise<Model> {
     const tenantFilter = this.getTenantFilter();
-    return (this.delegate.create as Function)({
+    return this.delegate.create({
       data: { ...data, ...tenantFilter },
     }) as Promise<Model>;
   }
 
   async update(id: string, data: Record<string, unknown>): Promise<Model> {
     const tenantFilter = this.getTenantFilter();
-    return (this.delegate.update as Function)({
+    return this.delegate.update({
       where: { id, ...tenantFilter },
       data,
     }) as Promise<Model>;
@@ -78,7 +78,7 @@ export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
 
   async softDelete(id: string): Promise<Model> {
     const tenantFilter = this.getTenantFilter();
-    return (this.delegate.update as Function)({
+    return this.delegate.update({
       where: { id, ...tenantFilter },
       data: { deletedAt: new Date() },
     }) as Promise<Model>;
@@ -86,7 +86,7 @@ export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
 
   async restore(id: string): Promise<Model> {
     const tenantFilter = this.getTenantFilter();
-    return (this.delegate.update as Function)({
+    return this.delegate.update({
       where: { id, ...tenantFilter },
       data: { deletedAt: null },
     }) as Promise<Model>;
@@ -94,13 +94,13 @@ export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
 
   async hardDelete(id: string): Promise<Model> {
     const tenantFilter = this.getTenantFilter();
-    return (this.delegate.delete as Function)({
+    return this.delegate.delete({
       where: { id, ...tenantFilter },
     }) as Promise<Model>;
   }
 
   async count(where?: Record<string, unknown>): Promise<number> {
-    return (this.delegate.count as Function)({
+    return this.delegate.count({
       where: this.mergeWhere(where),
     }) as Promise<number>;
   }
@@ -118,14 +118,14 @@ export class BaseRepository<Model, Delegate extends ModelDelegate<Model>> {
     const where = this.mergeWhere(options.where);
 
     const [data, total] = await this.prisma.$transaction([
-      (this.delegate.findMany as Function)({
+      this.delegate.findMany({
         where,
         skip,
         take: limit,
         orderBy: options.orderBy,
         include: options.include,
       }),
-      (this.delegate.count as Function)({ where }),
+      this.delegate.count({ where }),
     ]);
 
     return {

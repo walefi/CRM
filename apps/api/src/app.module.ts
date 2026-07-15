@@ -16,6 +16,8 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { CompanySettingsModule } from './modules/company-settings/company-settings.module';
 import { CustomFieldsModule } from './modules/custom-fields/custom-fields.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
+import { ProductsModule } from './modules/products/products.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { PipelinesModule } from './modules/pipelines/pipelines.module';
@@ -25,6 +27,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AutomationsModule } from './modules/automations/automations.module';
+import { QuotesModule } from './modules/quotes/quotes.module';
 import { ObservabilityModule } from './infrastructure/observability/observability.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantGuard } from './common/guards/tenant.guard';
@@ -67,6 +70,8 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     CompaniesModule,
     CompanySettingsModule,
     CustomFieldsModule,
+    CalendarModule,
+    ProductsModule,
     ContactsModule,
     LeadsModule,
     PipelinesModule,
@@ -76,6 +81,7 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     IntegrationsModule,
     AiModule,
     AutomationsModule,
+    QuotesModule,
   ],
   providers: [
     {

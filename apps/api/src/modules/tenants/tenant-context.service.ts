@@ -1,5 +1,4 @@
 import { Injectable, Scope, Logger } from '@nestjs/common';
-import { Request } from 'express';
 import { AsyncLocalStorage } from 'async_hooks';
 
 export interface TenantInfo {

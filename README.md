@@ -15,41 +15,44 @@ developer experience.
 ## Tech Stack
 
 ### Backend
-| Technology | Purpose |
-|-----------|---------|
-| NestJS 10 | API Framework |
-| TypeScript 5 | Language |
-| Prisma 5 | ORM |
-| PostgreSQL 16 | Database |
-| Redis 7 | Cache / Queues |
-| BullMQ | Job Queue |
-| JWT + Passport | Authentication |
-| Socket.IO | Real-time |
-| Swagger | API Documentation |
-| Winston | Logging |
+
+| Technology     | Purpose           |
+| -------------- | ----------------- |
+| NestJS 10      | API Framework     |
+| TypeScript 5   | Language          |
+| Prisma 5       | ORM               |
+| PostgreSQL 16  | Database          |
+| Redis 7        | Cache / Queues    |
+| BullMQ         | Job Queue         |
+| JWT + Passport | Authentication    |
+| Socket.IO      | Real-time         |
+| Swagger        | API Documentation |
+| Winston        | Logging           |
 
 ### Frontend
-| Technology | Purpose |
-|-----------|---------|
-| Next.js 14 | Framework |
-| React 18 | UI Library |
-| TypeScript 5 | Language |
-| Tailwind CSS 3 | Styling |
-| Shadcn UI | Design System |
-| React Query 5 | Server State |
-| Zustand 4 | Client State |
-| React Hook Form | Forms |
-| Zod | Validation |
-| Framer Motion | Animations |
+
+| Technology      | Purpose       |
+| --------------- | ------------- |
+| Next.js 14      | Framework     |
+| React 18        | UI Library    |
+| TypeScript 5    | Language      |
+| Tailwind CSS 3  | Styling       |
+| Shadcn UI       | Design System |
+| React Query 5   | Server State  |
+| Zustand 4       | Client State  |
+| React Hook Form | Forms         |
+| Zod             | Validation    |
+| Framer Motion   | Animations    |
 
 ### Infrastructure
-| Technology | Purpose |
-|-----------|---------|
-| Docker | Containerization |
-| Docker Compose | Orchestration |
-| Nginx | Reverse Proxy |
-| pnpm + Turbo | Monorepo |
-| GitHub Actions | CI/CD |
+
+| Technology     | Purpose          |
+| -------------- | ---------------- |
+| Docker         | Containerization |
+| Docker Compose | Orchestration    |
+| Nginx          | Reverse Proxy    |
+| pnpm + Turbo   | Monorepo         |
+| GitHub Actions | CI/CD            |
 
 ---
 
@@ -217,13 +220,13 @@ docker compose exec api pnpm db:migrate
 
 ### Access Points
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| **Frontend** | http://localhost:3000 | admin@crm.com / Admin@123 |
-| **API** | http://localhost:3001 | — |
-| **Swagger** | http://localhost:3001/api/docs | — |
-| **PgAdmin** | http://localhost:5050 | admin@crm.com / Admin@123 |
-| **Prisma Studio** | `pnpm --filter @crm/api db:studio` | — |
+| Service           | URL                                | Credentials               |
+| ----------------- | ---------------------------------- | ------------------------- |
+| **Frontend**      | http://localhost:3000              | admin@crm.com / Admin@123 |
+| **API**           | http://localhost:3001              | —                         |
+| **Swagger**       | http://localhost:3001/api/docs     | —                         |
+| **PgAdmin**       | http://localhost:5050              | admin@crm.com / Admin@123 |
+| **Prisma Studio** | `pnpm --filter @crm/api db:studio` | —                         |
 
 ### Default Credentials
 
@@ -235,73 +238,114 @@ docker compose exec api pnpm db:migrate
 ## API Endpoints
 
 ### Health
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | /api/v1/health | No | Health check (DB + memory) |
+
+| Method | Path           | Auth | Description                |
+| ------ | -------------- | ---- | -------------------------- |
+| GET    | /api/v1/health | No   | Health check (DB + memory) |
 
 ### Auth
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | /api/v1/auth/login | No | User login |
-| POST | /api/v1/auth/register | No | User registration |
-| POST | /api/v1/auth/refresh | No | Refresh tokens |
-| POST | /api/v1/auth/logout | Yes | User logout |
-| GET | /api/v1/auth/profile | Yes | Get profile |
-| POST | /api/v1/auth/change-password | Yes | Change password |
+
+| Method | Path                         | Auth | Description       |
+| ------ | ---------------------------- | ---- | ----------------- |
+| POST   | /api/v1/auth/login           | No   | User login        |
+| POST   | /api/v1/auth/register        | No   | User registration |
+| POST   | /api/v1/auth/refresh         | No   | Refresh tokens    |
+| POST   | /api/v1/auth/logout          | Yes  | User logout       |
+| GET    | /api/v1/auth/profile         | Yes  | Get profile       |
+| POST   | /api/v1/auth/change-password | Yes  | Change password   |
 
 ### Users
-| Method | Path | Auth | Roles | Description |
-|--------|------|------|-------|-------------|
-| GET | /api/v1/users | Yes | — | List users |
-| GET | /api/v1/users/:id | Yes | — | Get user |
-| POST | /api/v1/users | Yes | admin | Create user |
-| PUT | /api/v1/users/:id | Yes | admin | Update user |
-| DELETE | /api/v1/users/:id | Yes | admin | Delete user |
+
+| Method | Path              | Auth | Roles | Description |
+| ------ | ----------------- | ---- | ----- | ----------- |
+| GET    | /api/v1/users     | Yes  | —     | List users  |
+| GET    | /api/v1/users/:id | Yes  | —     | Get user    |
+| POST   | /api/v1/users     | Yes  | admin | Create user |
+| PUT    | /api/v1/users/:id | Yes  | admin | Update user |
+| DELETE | /api/v1/users/:id | Yes  | admin | Delete user |
 
 ### Tenants
-| Method | Path | Auth | Roles | Description |
-|--------|------|------|-------|-------------|
-| GET | /api/v1/tenants/current | Yes | — | Current tenant |
-| GET | /api/v1/tenants/current/stats | Yes | — | Tenant stats |
-| GET | /api/v1/tenants/:slug | Yes | — | Tenant by slug |
-| PUT | /api/v1/tenants/current | Yes | admin | Update tenant |
-| DELETE | /api/v1/tenants/:id | Yes | admin | Delete tenant |
 
-Modules **Companies**, **Contacts**, **Leads**, **Pipelines**, **Deals**, **Tasks**,
-**Notifications**, **Integrations**, **AI**, and **Automations** have reserved routes
-and will be implemented in future stages.
+| Method | Path                          | Auth | Roles | Description    |
+| ------ | ----------------------------- | ---- | ----- | -------------- |
+| GET    | /api/v1/tenants/current       | Yes  | —     | Current tenant |
+| GET    | /api/v1/tenants/current/stats | Yes  | —     | Tenant stats   |
+| GET    | /api/v1/tenants/:slug         | Yes  | —     | Tenant by slug |
+| PUT    | /api/v1/tenants/current       | Yes  | admin | Update tenant  |
+| DELETE | /api/v1/tenants/:id           | Yes  | admin | Delete tenant  |
+
+### Products & Categories
+
+| Method | Path                   | Auth | Roles | Description        |
+| ------ | ---------------------- | ---- | ----- | ------------------ |
+| GET    | /api/v1/products       | Yes  | —     | List products      |
+| GET    | /api/v1/products/stats | Yes  | —     | Product statistics |
+| GET    | /api/v1/products/:id   | Yes  | —     | Get product        |
+| POST   | /api/v1/products       | Yes  | admin | Create product     |
+| PATCH  | /api/v1/products/:id   | Yes  | admin | Update product     |
+| DELETE | /api/v1/products/:id   | Yes  | admin | Delete product     |
+| GET    | /api/v1/categories     | Yes  | —     | List categories    |
+| POST   | /api/v1/categories     | Yes  | admin | Create category    |
+| PATCH  | /api/v1/categories/:id | Yes  | admin | Update category    |
+| DELETE | /api/v1/categories/:id | Yes  | admin | Delete category    |
+
+### Quotes
+
+| Method | Path                                           | Auth | Roles | Description                     |
+| ------ | ---------------------------------------------- | ---- | ----- | ------------------------------- |
+| GET    | /api/v1/quotes                                 | Yes  | —     | List quotes with filters        |
+| GET    | /api/v1/quotes/stats                           | Yes  | —     | Quote statistics                |
+| GET    | /api/v1/quotes/templates                       | Yes  | —     | List templates                  |
+| POST   | /api/v1/quotes/templates                       | Yes  | admin | Create template                 |
+| PATCH  | /api/v1/quotes/templates/:id                   | Yes  | admin | Update template                 |
+| DELETE | /api/v1/quotes/templates/:id                   | Yes  | admin | Delete template                 |
+| GET    | /api/v1/quotes/export/:id                      | Yes  | —     | Export quote (json/csv)         |
+| GET    | /api/v1/quotes/:id                             | Yes  | —     | Get quote with items & versions |
+| POST   | /api/v1/quotes                                 | Yes  | —     | Create quote                    |
+| PATCH  | /api/v1/quotes/:id                             | Yes  | —     | Update quote                    |
+| DELETE | /api/v1/quotes/:id                             | Yes  | admin | Soft delete quote               |
+| POST   | /api/v1/quotes/:id/archive                     | Yes  | —     | Archive quote                   |
+| POST   | /api/v1/quotes/:id/restore                     | Yes  | —     | Restore quote                   |
+| POST   | /api/v1/quotes/:id/duplicate                   | Yes  | —     | Duplicate quote                 |
+| POST   | /api/v1/quotes/:id/send                        | Yes  | —     | Send quote to customer          |
+| POST   | /api/v1/quotes/:id/items                       | Yes  | —     | Add item to quote               |
+| PATCH  | /api/v1/quotes/:id/items/:itemId               | Yes  | —     | Update quote item               |
+| DELETE | /api/v1/quotes/:id/items/:itemId               | Yes  | —     | Remove quote item               |
+| POST   | /api/v1/quotes/:id/items/reorder               | Yes  | —     | Reorder items                   |
+| GET    | /api/v1/quotes/:id/versions                    | Yes  | —     | Get version history             |
+| POST   | /api/v1/quotes/:id/versions/:versionId/restore | Yes  | —     | Restore version                 |
 
 ---
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment | `development` |
-| `API_PORT` | API server port | `3001` |
-| `API_URL` | API URL | `http://localhost:3001` |
-| `WEB_PORT` | Web server port | `3000` |
-| `WEB_URL` | Web URL | `http://localhost:3000` |
-| `DATABASE_URL` | PostgreSQL connection string | — |
-| `POSTGRES_USER` | PostgreSQL user | `crm_user` |
-| `POSTGRES_PASSWORD` | PostgreSQL password | `crm_password` |
-| `POSTGRES_DB` | PostgreSQL database | `crm_db` |
-| `POSTGRES_PORT` | PostgreSQL port | `5432` |
-| `REDIS_HOST` | Redis host | `localhost` |
-| `REDIS_PORT` | Redis port | `6379` |
-| `REDIS_PASSWORD` | Redis password | — |
-| `JWT_SECRET` | JWT signing secret | — |
-| `JWT_REFRESH_SECRET` | JWT refresh token secret | — |
-| `JWT_EXPIRATION` | Access token expiry | `15m` |
-| `JWT_REFRESH_EXPIRATION` | Refresh token expiry | `7d` |
-| `ENCRYPTION_KEY` | Encryption key (32 chars) | — |
-| `RATE_LIMIT_TTL` | Rate limit TTL (seconds) | `60` |
-| `RATE_LIMIT_MAX` | Rate limit max requests | `100` |
-| `CORS_ORIGIN` | Allowed CORS origin | `http://localhost:3000` |
-| `BULL_QUEUE_PREFIX` | BullMQ prefix | `crm` |
-| `PGADMIN_EMAIL` | PgAdmin login email | `admin@crm.com` |
-| `PGADMIN_PASSWORD` | PgAdmin login password | `Admin@123` |
-| `PGADMIN_PORT` | PgAdmin port | `5050` |
+| Variable                 | Description                  | Default                 |
+| ------------------------ | ---------------------------- | ----------------------- |
+| `NODE_ENV`               | Environment                  | `development`           |
+| `API_PORT`               | API server port              | `3001`                  |
+| `API_URL`                | API URL                      | `http://localhost:3001` |
+| `WEB_PORT`               | Web server port              | `3000`                  |
+| `WEB_URL`                | Web URL                      | `http://localhost:3000` |
+| `DATABASE_URL`           | PostgreSQL connection string | —                       |
+| `POSTGRES_USER`          | PostgreSQL user              | `crm_user`              |
+| `POSTGRES_PASSWORD`      | PostgreSQL password          | `crm_password`          |
+| `POSTGRES_DB`            | PostgreSQL database          | `crm_db`                |
+| `POSTGRES_PORT`          | PostgreSQL port              | `5432`                  |
+| `REDIS_HOST`             | Redis host                   | `localhost`             |
+| `REDIS_PORT`             | Redis port                   | `6379`                  |
+| `REDIS_PASSWORD`         | Redis password               | —                       |
+| `JWT_SECRET`             | JWT signing secret           | —                       |
+| `JWT_REFRESH_SECRET`     | JWT refresh token secret     | —                       |
+| `JWT_EXPIRATION`         | Access token expiry          | `15m`                   |
+| `JWT_REFRESH_EXPIRATION` | Refresh token expiry         | `7d`                    |
+| `ENCRYPTION_KEY`         | Encryption key (32 chars)    | —                       |
+| `RATE_LIMIT_TTL`         | Rate limit TTL (seconds)     | `60`                    |
+| `RATE_LIMIT_MAX`         | Rate limit max requests      | `100`                   |
+| `CORS_ORIGIN`            | Allowed CORS origin          | `http://localhost:3000` |
+| `BULL_QUEUE_PREFIX`      | BullMQ prefix                | `crm`                   |
+| `PGADMIN_EMAIL`          | PgAdmin login email          | `admin@crm.com`         |
+| `PGADMIN_PASSWORD`       | PgAdmin login password       | `Admin@123`             |
+| `PGADMIN_PORT`           | PgAdmin port                 | `5050`                  |
 
 ---
 
@@ -384,6 +428,7 @@ pnpm clean                  # Clean build artifacts
 ## CI/CD
 
 GitHub Actions workflows for:
+
 - Linting and formatting checks
 - Unit and integration tests
 - Build verification

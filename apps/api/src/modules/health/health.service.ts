@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 import { QueueService } from '../../infrastructure/queue/queue.service';
-import { APP_VERSION, APP_NAME } from '../../shared/constants/app.constants';
+import { APP_VERSION } from '../../shared/constants/app.constants';
 
 interface HealthCheck {
   status: 'ok' | 'error' | 'degraded';

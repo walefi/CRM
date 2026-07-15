@@ -43,18 +43,16 @@ export class AppLogger implements LoggerService {
             : winston.format.combine(
                 winston.format.colorize({ all: true }),
                 winston.format.timestamp({ format: 'HH:mm:ss.SSS' }),
-                winston.format.printf(
-                  ({ timestamp, level, message, context: ctx, ...meta }) => {
-                    const reqCtx = getRequestContext();
-                    const ids = reqCtx
-                      ? `\x1b[90m[${reqCtx.requestId.slice(0, 8)}|${(reqCtx.correlationId || '').slice(0, 8)}]\x1b[0m`
-                      : '';
-                    const c = ctx ? `\x1b[33m[${ctx}]\x1b[0m` : '';
-                    const extra =
-                      Object.keys(meta).length > 5 ? `\n${JSON.stringify(meta, null, 2)}` : '';
-                    return `${timestamp} ${ids} ${level} ${c} ${message}${extra}`;
-                  },
-                ),
+                winston.format.printf(({ timestamp, level, message, context: ctx, ...meta }) => {
+                  const reqCtx = getRequestContext();
+                  const ids = reqCtx
+                    ? `\x1b[90m[${reqCtx.requestId.slice(0, 8)}|${(reqCtx.correlationId || '').slice(0, 8)}]\x1b[0m`
+                    : '';
+                  const c = ctx ? `\x1b[33m[${ctx}]\x1b[0m` : '';
+                  const extra =
+                    Object.keys(meta).length > 5 ? `\n${JSON.stringify(meta, null, 2)}` : '';
+                  return `${timestamp} ${ids} ${level} ${c} ${message}${extra}`;
+                }),
               ),
         }),
       ],
@@ -65,11 +63,11 @@ export class AppLogger implements LoggerService {
     this.context = context;
   }
 
-  log(message: unknown, ...optionalParams: unknown[]) {
-    this.logger.info(this.formatMessage(message), ...optionalParams);
+  log(message: unknown, ..._optionalParams: unknown[]) {
+    this.logger.info(this.formatMessage(message));
   }
 
-  error(message: unknown, trace?: string, ...optionalParams: unknown[]) {
+  error(message: unknown, trace?: string, ..._optionalParams: unknown[]) {
     const reqCtx = getRequestContext();
     const meta = {
       trace,
@@ -84,16 +82,16 @@ export class AppLogger implements LoggerService {
     this.logger.error(this.formatMessage(message), { ...meta, context: this.context });
   }
 
-  warn(message: unknown, ...optionalParams: unknown[]) {
-    this.logger.warn(this.formatMessage(message), ...optionalParams);
+  warn(message: unknown, ..._optionalParams: unknown[]) {
+    this.logger.warn(this.formatMessage(message));
   }
 
-  debug(message: unknown, ...optionalParams: unknown[]) {
-    this.logger.debug(this.formatMessage(message), ...optionalParams);
+  debug(message: unknown, ..._optionalParams: unknown[]) {
+    this.logger.debug(this.formatMessage(message));
   }
 
-  verbose(message: unknown, ...optionalParams: unknown[]) {
-    this.logger.verbose(this.formatMessage(message), ...optionalParams);
+  verbose(message: unknown, ..._optionalParams: unknown[]) {
+    this.logger.verbose(this.formatMessage(message));
   }
 
   private formatMessage(message: unknown): string {

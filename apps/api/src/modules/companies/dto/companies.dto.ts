@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, MinLength, MaxLength, Matches, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsEmail, MinLength, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCompanyDto {

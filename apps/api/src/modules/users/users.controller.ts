@@ -1,6 +1,15 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, Query,
-  HttpCode, HttpStatus, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -10,7 +19,6 @@ import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -21,10 +29,7 @@ export class UsersController {
 
   @Get()
   @ApiOperation({ summary: 'List users with filters, pagination and search' })
-  findAll(
-    @CurrentUser('tenantId') tenantId: string,
-    @Query() filters: UserFilterDto,
-  ) {
+  findAll(@CurrentUser('tenantId') tenantId: string, @Query() filters: UserFilterDto) {
     return this.usersService.findAll(tenantId, filters);
   }
 
@@ -51,10 +56,7 @@ export class UsersController {
   @Roles('admin')
   @ApiOperation({ summary: 'Create user (admin only)' })
   @ApiResponse({ status: 201, description: 'User created' })
-  create(
-    @Body() dto: CreateUserDto,
-    @CurrentUser('tenantId') tenantId: string,
-  ) {
+  create(@Body() dto: CreateUserDto, @CurrentUser('tenantId') tenantId: string) {
     return this.usersService.create(tenantId, dto);
   }
 

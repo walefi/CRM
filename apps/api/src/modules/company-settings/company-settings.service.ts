@@ -1,9 +1,6 @@
 import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  CompanySettingsDto, SmtpSettingsDto, NotificationSettingsDto,
-  SecuritySettingsDto, FileSettingsDto, TestEmailDto,
-} from './dto/settings.dto';
+import { TestEmailDto } from './dto/settings.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Prisma } from '@prisma/client';
@@ -42,7 +39,13 @@ export class CompanySettingsService {
     if (!tenant) throw new NotFoundException('Tenant not found');
 
     const currentSettings = (tenant.settings as Record<string, unknown>) || {};
-    const updated = { ...currentSettings, [section]: { ...((currentSettings[section] as Record<string, unknown>) || {}), ...(data as Record<string, unknown>) } };
+    const updated = {
+      ...currentSettings,
+      [section]: {
+        ...((currentSettings[section] as Record<string, unknown>) || {}),
+        ...(data as Record<string, unknown>),
+      },
+    };
 
     await this.prisma.tenant.update({
       where: { id: tenantId },
@@ -87,8 +90,16 @@ export class CompanySettingsService {
     });
 
     const uploadsDir = path.join(process.cwd(), '..', '..', 'uploads', 'logos');
-    const files = ['png', 'jpg', 'jpeg', 'svg', 'webp'].map(ext => path.join(uploadsDir, `logo-${tenantId}.${ext}`));
-    files.forEach(f => { try { fs.unlinkSync(f); } catch {} });
+    const files = ['png', 'jpg', 'jpeg', 'svg', 'webp'].map((ext) =>
+      path.join(uploadsDir, `logo-${tenantId}.${ext}`),
+    );
+    files.forEach((f) => {
+      try {
+        fs.unlinkSync(f);
+      } catch {
+        /* file may not exist */
+      }
+    });
 
     await this.audit(tenantId, 'LOGO_DELETED');
   }
@@ -128,6 +139,7 @@ export class CompanySettingsService {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const nodemailer = require('nodemailer');
       const transporter = nodemailer.createTransport({
         host: smtp.smtpHost,

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import * as argon2 from 'argon2';
+import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto, UpdateProfileDto, UserFilterDto } from './dto/users.dto';
 import { Prisma } from '@prisma/client';
@@ -255,7 +256,7 @@ export class UsersService {
       throw new ConflictException('Email already registered');
     }
 
-    const inviteToken = require('uuid').v4();
+    const inviteToken = uuidv4();
 
     const user = await this.prisma.user.create({
       data: {
@@ -292,7 +293,7 @@ export class UsersService {
       throw new NotFoundException('Invite not found');
     }
 
-    const inviteToken = require('uuid').v4();
+    const inviteToken = uuidv4();
 
     await this.prisma.user.update({
       where: { id },

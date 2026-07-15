@@ -24,7 +24,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+  handleRequest(err: any, user: any, info: any, _context: ExecutionContext) {
     if (err || !user) {
       this.logger.warn(`Unauthorized access attempt: ${info?.message || 'No token'}`);
       throw err || new UnauthorizedException('Authentication required');

@@ -34,7 +34,7 @@ export class AuthService {
 
     if (!user) {
       this.incrementLoginAttempt(attemptKey);
-      await this.audit(null, 'LOGIN_FAILED', 'user', 'unknown', requestInfo);
+      await this.audit(null, 'LOGIN_FAILED', 'user', 'unknown', null, requestInfo);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -46,7 +46,7 @@ export class AuthService {
 
     if (!isPasswordValid) {
       this.incrementLoginAttempt(attemptKey);
-      await this.audit(user.id, 'LOGIN_FAILED', 'user', user.id, requestInfo);
+      await this.audit(user.id, 'LOGIN_FAILED', 'user', user.id, user.tenantId, requestInfo);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -77,7 +77,7 @@ export class AuthService {
       }),
     ]);
 
-    await this.audit(user.id, 'LOGIN', 'user', user.id, requestInfo);
+    await this.audit(user.id, 'LOGIN', 'user', user.id, user.tenantId, requestInfo);
 
     this.logger.log(`User ${user.email} logged in`);
 
@@ -111,8 +111,6 @@ export class AuthService {
       timeCost: 3,
       parallelism: 4,
     });
-
-    const emailVerificationToken = uuid();
 
     const result = await this.prisma.$transaction(async (prisma) => {
       const tenant = await prisma.tenant.create({
@@ -149,7 +147,11 @@ export class AuthService {
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: result.user.id },
-        data: { refreshToken: tokens.refreshToken, lastLoginAt: new Date(), lastLoginIp: requestInfo.ip },
+        data: {
+          refreshToken: tokens.refreshToken,
+          lastLoginAt: new Date(),
+          lastLoginIp: requestInfo.ip,
+        },
       }),
       this.prisma.session.create({
         data: {
@@ -163,7 +165,14 @@ export class AuthService {
       }),
     ]);
 
-    await this.audit(result.user.id, 'REGISTER', 'user', result.user.id, requestInfo);
+    await this.audit(
+      result.user.id,
+      'REGISTER',
+      'user',
+      result.user.id,
+      result.user.tenantId,
+      requestInfo,
+    );
 
     this.logger.log(`New account registered: ${result.user.email}`);
 
@@ -245,7 +254,7 @@ export class AuthService {
       data: { refreshToken: null },
     });
 
-    await this.audit(userId, 'LOGOUT', 'user', userId, { ip: 'system', userAgent: 'system' });
+    await this.audit(userId, 'LOGOUT', 'user', userId, null, { ip: 'system', userAgent: 'system' });
 
     this.logger.log(`User ${userId} logged out`);
   }
@@ -259,7 +268,10 @@ export class AuthService {
       }),
     ]);
 
-    await this.audit(userId, 'LOGOUT_ALL', 'user', userId, { ip: 'system', userAgent: 'system' });
+    await this.audit(userId, 'LOGOUT_ALL', 'user', userId, null, {
+      ip: 'system',
+      userAgent: 'system',
+    });
 
     this.logger.log(`User ${userId} logged out from all devices`);
   }
@@ -288,7 +300,11 @@ export class AuthService {
     return { token: resetToken };
   }
 
-  async resetPassword(token: string, newPassword: string, requestInfo: { ip: string; userAgent: string }) {
+  async resetPassword(
+    token: string,
+    newPassword: string,
+    requestInfo: { ip: string; userAgent: string },
+  ) {
     const user = await this.prisma.user.findFirst({
       where: {
         resetToken: token,
@@ -320,12 +336,16 @@ export class AuthService {
       this.prisma.session.deleteMany({ where: { userId: user.id } }),
     ]);
 
-    await this.audit(user.id, 'PASSWORD_RESET', 'user', user.id, requestInfo);
+    await this.audit(user.id, 'PASSWORD_RESET', 'user', user.id, user.tenantId, requestInfo);
 
     this.logger.log(`Password reset for user ${user.email}`);
   }
 
-  async changePassword(userId: string, dto: ChangePasswordDto, requestInfo: { ip: string; userAgent: string }) {
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+    _requestInfo: { ip: string; userAgent: string },
+  ) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
@@ -353,7 +373,10 @@ export class AuthService {
       this.prisma.session.deleteMany({ where: { userId } }),
     ]);
 
-    await this.audit(userId, 'PASSWORD_CHANGE', 'user', userId, requestInfo);
+    await this.audit(userId, 'PASSWORD_CHANGE', 'user', userId, null, {
+      ip: 'system',
+      userAgent: 'system',
+    });
 
     this.logger.log(`Password changed for user ${userId}`);
   }
@@ -397,7 +420,10 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { resetToken: verificationToken, resetTokenExp: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+      data: {
+        resetToken: verificationToken,
+        resetTokenExp: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      },
     });
 
     this.logger.log(`Verification email resent to ${user.email}`);
@@ -495,8 +521,10 @@ export class AuthService {
     action: string,
     entity: string,
     entityId: string,
+    tenantId: string | null,
     requestInfo: { ip: string; userAgent: string },
   ) {
+    if (!tenantId) return;
     try {
       await this.prisma.auditLog.create({
         data: {
@@ -504,7 +532,7 @@ export class AuthService {
           entity,
           entityId,
           userId,
-          tenantId: 'system',
+          tenantId,
           ip: requestInfo.ip,
           userAgent: requestInfo.userAgent,
           metadata: { timestamp: new Date().toISOString() },
@@ -539,9 +567,12 @@ export class AuthService {
 
     this.loginAttempts.set(key, attempt);
 
-    setTimeout(() => {
-      this.loginAttempts.delete(key);
-    }, 15 * 60 * 1000);
+    setTimeout(
+      () => {
+        this.loginAttempts.delete(key);
+      },
+      15 * 60 * 1000,
+    );
   }
 
   private parseUserAgent(userAgent: string) {

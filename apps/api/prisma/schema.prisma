@@ -161,6 +161,19 @@ enum WidgetType {
   CALENDAR
 }
 
+enum QuoteStatus {
+  DRAFT
+  UNDER_REVIEW
+  SENT
+  VIEWED
+  NEGOTIATION
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+  ARCHIVED
+}
+
 // ═══════════════════════════════════════
 // CORE
 // ═══════════════════════════════════════
@@ -355,6 +368,7 @@ model Team {
   tenant Tenant @relation(fields: [tenantId], references: [id])
   lead   User?  @relation("TeamLead", fields: [leadId], references: [id], onDelete: SetNull)
   users  User[] @relation("TeamMembers")
+  quotes Quote[]
 
   @@index([tenantId])
   @@index([leadId])
@@ -442,6 +456,7 @@ model Company {
   tenant   Tenant     @relation(fields: [tenantId], references: [id])
   owner    User?      @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   contacts Contact[]
+  quotes   Quote[]
   leads    Lead[]
   deals    Deal[]
   tasks    Task[]
@@ -489,6 +504,7 @@ model Contact {
   files         File[]
   activities    Activity[]
   leads         Lead[]
+  quotes        Quote[]
   customers     Customer[]
   conversations Conversation[]
 
@@ -682,8 +698,8 @@ model Product {
   tenant   Tenant        @relation(fields: [tenantId], references: [id])
   category Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   owner    User?         @relation("ProductOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  quotes   Quote[]
-  deals    DealProduct[]
+  quoteItems QuoteItem[]
+  deals       DealProduct[]
 
   @@index([tenantId])
   @@index([categoryId])
@@ -723,31 +739,128 @@ model Category {
 }
 
 model Quote {
-  id          String    @id @default(uuid())
-  number      String
-  status      String    @default("draft")
-  totalAmount Decimal?  @db.Decimal(15, 2)
-  notes       String?
-  validUntil  DateTime?
-  tenantId    String
-  dealId      String?
-  customerId  String?
-  productId   String?
-  ownerId     String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  id                      String       @id @default(uuid())
+  number                  String
+  title                   String?
+  description             String?
+  status                  QuoteStatus  @default(DRAFT)
+  currency                DealCurrency @default(BRL)
+  subtotal                Decimal?     @db.Decimal(15, 2)
+  discount                Decimal?     @db.Decimal(15, 2)
+  discountPercent         Decimal?     @db.Decimal(5, 2)
+  taxes                   Decimal?     @db.Decimal(15, 2)
+  shipping                Decimal?     @db.Decimal(15, 2)
+  totalAmount             Decimal?     @db.Decimal(15, 2)
+  margin                  Decimal?     @db.Decimal(5, 2)
+  paymentTerms            String?
+  commercialConditions    String?
+  internalNotes           String?
+  customerNotes           String?
+  issuedAt                DateTime?
+  validUntil              DateTime?
+  isFavorite              Boolean      @default(false)
+  isArchived              Boolean      @default(false)
+  tags                    String[]
+  metadata                Json?
+  tenantId                String
+  dealId                  String?
+  companyId               String?
+  contactId               String?
+  customerId              String?
+  ownerId                 String?
+  teamId                  String?
+  createdBy               String?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  deletedAt               DateTime?
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id])
-  deal     Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
-  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  product  Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
-  owner    User?     @relation("QuoteOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  deal        Deal?           @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  company     Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  contact     Contact?        @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  customer    Customer?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  owner       User?           @relation("QuoteOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  team        Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  items       QuoteItem[]
+  versions    QuoteVersion[]
+  activities  Activity[]
 
   @@index([tenantId])
+  @@index([number])
   @@index([dealId])
+  @@index([companyId])
+  @@index([contactId])
   @@index([customerId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([validUntil])
+  @@index([deletedAt])
   @@map("quotes")
+}
+
+model QuoteItem {
+  id              String    @id @default(uuid())
+  quoteId         String
+  productId       String?
+  description     String
+  type            String    @default("product")
+  quantity        Decimal?  @db.Decimal(15, 3)
+  unitPrice       Decimal?  @db.Decimal(15, 2)
+  costPrice       Decimal?  @db.Decimal(15, 2)
+  discount        Decimal?  @db.Decimal(15, 2)
+  discountPercent Decimal?  @db.Decimal(5, 2)
+  taxes           Decimal?  @db.Decimal(15, 2)
+  taxPercent      Decimal?  @db.Decimal(5, 2)
+  subtotal        Decimal?  @db.Decimal(15, 2)
+  total           Decimal?  @db.Decimal(15, 2)
+  sortOrder       Int       @default(0)
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  quote   Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@index([productId])
+  @@map("quote_items")
+}
+
+model QuoteVersion {
+  id          String   @id @default(uuid())
+  quoteId     String
+  version     Int
+  data        Json
+  reason      String?
+  tenantId    String
+  createdBy   String?
+  createdAt   DateTime @default(now())
+
+  quote  Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([version])
+  @@index([tenantId])
+  @@map("quote_versions")
+}
+
+model QuoteTemplate {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  type        String    @default("commercial")
+  content     Json
+  isDefault   Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  tenantId    String
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([name, tenantId])
+  @@index([tenantId])
+  @@index([type])
+  @@map("quote_templates")
 }
 
 model Contract {
@@ -800,20 +913,23 @@ model Activity {
   contactId   String?
   dealId      String?
   companyId   String?
+  quoteId     String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
 
-  tenant  Tenant   @relation(fields: [tenantId], references: [id])
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contact Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
-  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  tenant    Tenant  @relation(fields: [tenantId], references: [id])
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal      Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  quote     Quote?  @relation(fields: [quoteId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([userId])
   @@index([contactId])
   @@index([dealId])
+  @@index([quoteId])
   @@index([dueDate])
   @@map("activities")
 }
