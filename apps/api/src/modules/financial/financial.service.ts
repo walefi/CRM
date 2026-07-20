@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -40,10 +40,11 @@ export class FinancialService {
 
   async recordReceipt(tenantId: string, dto: any) {
     const prismaAny = this.prisma as any;
+    const receivable = await prismaAny.receivable.findFirst({ where: { id: dto.receivableId, tenantId } });
+    if (!receivable) throw new NotFoundException('Receivable not found');
     await prismaAny.receivablePayment.create({
       data: { receivableId: dto.receivableId, amount: dto.amount, method: dto.method || 'pix', notes: dto.notes },
     });
-    const receivable = await prismaAny.receivable.findUnique({ where: { id: dto.receivableId } });
     const totalPaid = await prismaAny.receivablePayment.aggregate({ where: { receivableId: dto.receivableId }, _sum: { amount: true } });
     const paidAmount = totalPaid._sum?.amount || 0;
     await prismaAny.receivable.update({
@@ -68,10 +69,11 @@ export class FinancialService {
 
   async recordPayment(tenantId: string, dto: any) {
     const prismaAny = this.prisma as any;
+    const payable = await prismaAny.payable.findFirst({ where: { id: dto.payableId, tenantId } });
+    if (!payable) throw new NotFoundException('Payable not found');
     await prismaAny.payablePayment.create({
       data: { payableId: dto.payableId, amount: dto.amount, method: dto.method || 'pix', notes: dto.notes },
     });
-    const payable = await prismaAny.payable.findUnique({ where: { id: dto.payableId } });
     const totalPaid = await prismaAny.payablePayment.aggregate({ where: { payableId: dto.payableId }, _sum: { amount: true } });
     const paidAmount = totalPaid._sum?.amount || 0;
     await prismaAny.payable.update({

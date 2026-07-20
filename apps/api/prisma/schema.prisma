@@ -1331,7 +1331,7 @@ model Activity {
   location    String?
   isCompleted Boolean      @default(false)
   tenantId    String
-  userId      String
+  userId      String?
   contactId   String?
   dealId      String?
   companyId   String?
@@ -1342,7 +1342,7 @@ model Activity {
   deletedAt   DateTime?
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id])
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   contact  Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
   deal     Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
   company  Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
@@ -1473,12 +1473,12 @@ model TaskComment {
   id        String   @id @default(uuid())
   content   String
   taskId    String
-  userId    String
+  userId    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([taskId])
   @@index([userId])
@@ -1490,7 +1490,7 @@ model Note {
   content   String
   isPinned  Boolean   @default(false)
   tenantId  String
-  userId    String
+  userId    String?
   contactId String?
   dealId    String?
   leadId    String?
@@ -1499,8 +1499,8 @@ model Note {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  tenant  Tenant   @relation(fields: [tenantId], references: [id])
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant  Tenant    @relation(fields: [tenantId], references: [id])
+  user    User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   contact Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
   deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
   lead    Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
@@ -1556,11 +1556,11 @@ model History {
   newValue  String?
   module    String   @default("system")
   tenantId  String
-  userId    String
+  userId    String?
   createdAt DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([entity, entityId])

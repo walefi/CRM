@@ -47,8 +47,8 @@ export class CalendarController {
 
   @Delete('events/:id')
   @ApiOperation({ summary: 'Delete event' })
-  deleteEvent(@Param('id') id: string) {
-    return this.calendarService.deleteEvent(id);
+  deleteEvent(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.calendarService.deleteEvent(id, tenantId);
   }
 
   @Get('availability')

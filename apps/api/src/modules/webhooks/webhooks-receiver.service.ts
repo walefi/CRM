@@ -135,9 +135,17 @@ export class WebhooksReceiverService {
       }
       case 'stripe': {
         const sig = headers['stripe-signature'] || '';
-        const timestamp = sig.split(',')[0]?.split('=')[1];
+        const parts = sig.split(',').reduce((acc: Record<string, string>, part: string) => {
+          const [key, value] = part.split('=');
+          if (key && value) acc[key.trim()] = value.trim();
+          return acc;
+        }, {});
+        const timestamp = parts['t'];
+        const expectedSig = parts['v1'];
+        if (!timestamp || !expectedSig) return false;
         const expected = crypto.createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex');
-        return sig.includes(expected);
+        if (expectedSig.length !== expected.length) return false;
+        return crypto.timingSafeEqual(Buffer.from(expectedSig), Buffer.from(expected));
       }
       default: {
         const signature = headers['x-webhook-signature'] || headers['x-hub-signature'] || '';

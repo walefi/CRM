@@ -31,6 +31,7 @@ describe('QuotesService', () => {
     },
     quoteTemplate: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -362,9 +363,10 @@ describe('QuotesService', () => {
     });
 
     it('should delete a template', async () => {
+      mockPrisma.quoteTemplate.findFirst.mockResolvedValue({ id: 't1', tenantId: 'tenant-1' });
       mockPrisma.quoteTemplate.delete.mockResolvedValue({});
 
-      await service.deleteTemplate('t1');
+      await service.deleteTemplate('t1', 'tenant-1');
       expect(mockPrisma.quoteTemplate.delete).toHaveBeenCalledWith({ where: { id: 't1' } });
     });
   });

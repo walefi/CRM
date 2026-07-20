@@ -52,6 +52,9 @@ async function bootstrap() {
   app.use(
     json({
       limit: process.env.MAX_PAYLOAD_SIZE || '10mb',
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf.toString();
+      },
     }),
   );
 

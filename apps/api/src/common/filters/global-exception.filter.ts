@@ -38,7 +38,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (errorResponse.statusCode >= 500) {
       this.logger.error(
         `${request.method} ${request.url} ${errorResponse.statusCode} - ${errorResponse.message}`,
-        exception instanceof Error ? exception.stack : undefined,
+        process.env.NODE_ENV !== 'production' && exception instanceof Error ? exception.stack : undefined,
       );
     } else if (errorResponse.statusCode >= 400) {
       this.logger.warn(

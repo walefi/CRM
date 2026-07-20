@@ -683,7 +683,7 @@ export class AutomationsService {
       .sort((a: any, b: any) => a.sortOrder - b.sortOrder);
 
     for (const action of sortedActions) {
-      this.logger.debug(`[TEST] Would execute action: ${action.type} with config:`, action.config);
+      this.logger.debug(`[TEST] Would execute action: ${action.type}`);
       actionResults.push({
         actionId: action.id,
         type: action.type,

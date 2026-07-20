@@ -78,8 +78,8 @@ export class QuotesController {
   @ApiOperation({ summary: 'Excluir template' })
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteTemplate(@Param('id') id: string) {
-    return this.quotesService.deleteTemplate(id);
+  deleteTemplate(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.quotesService.deleteTemplate(id, tenantId);
   }
 
   @Get('quotes/export/:id')

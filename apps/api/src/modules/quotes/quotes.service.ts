@@ -576,14 +576,18 @@ export class QuotesService {
     });
   }
 
-  async updateTemplate(id: string, _tenantId: string, dto: Partial<CreateQuoteTemplateDto>) {
+  async updateTemplate(id: string, tenantId: string, dto: Partial<CreateQuoteTemplateDto>) {
+    const existing = await this.prisma.quoteTemplate.findFirst({ where: { id, tenantId } });
+    if (!existing) throw new NotFoundException('Template not found');
     return this.prisma.quoteTemplate.update({
       where: { id },
       data: { ...dto, content: dto.content as any },
     });
   }
 
-  async deleteTemplate(id: string) {
+  async deleteTemplate(id: string, tenantId: string) {
+    const existing = await this.prisma.quoteTemplate.findFirst({ where: { id, tenantId } });
+    if (!existing) throw new NotFoundException('Template not found');
     return this.prisma.quoteTemplate.delete({ where: { id } });
   }
 

@@ -10,6 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiExcludeController } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { WebhooksReceiverService } from './webhooks-receiver.service';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Webhooks')
 @ApiExcludeController()
@@ -18,6 +19,7 @@ export class WebhooksController {
   constructor(private readonly receiverService: WebhooksReceiverService) {}
 
   @Post(':provider')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Receive webhook from provider' })
   async receive(

@@ -5,7 +5,7 @@ import { QueueService } from '../../infrastructure/queue/queue.service';
 import { StorageAdapter } from '../../infrastructure/storage/storage.adapter';
 import { APP_VERSION } from '../../shared/constants/app.constants';
 
-interface HealthCheck {
+export interface HealthCheck {
   status: 'ok' | 'error' | 'degraded';
   latency: number;
   details?: Record<string, unknown>;

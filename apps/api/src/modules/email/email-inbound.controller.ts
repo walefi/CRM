@@ -12,6 +12,7 @@ import { Request, Response } from 'express';
 import { EmailReceiverService } from './email-receiver.service';
 import { IncomingEmailPayload } from './dto/incoming-email.dto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Email Inbound')
 @ApiExcludeController()
@@ -25,6 +26,7 @@ export class EmailInboundController {
   ) {}
 
   @Post('email')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Receive inbound email webhook' })
   async receiveInbound(
@@ -61,6 +63,7 @@ export class EmailInboundController {
   }
 
   @Post('email/sendgrid')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Receive SendGrid Inbound Parse webhook' })
   async receiveSendGrid(
@@ -86,6 +89,7 @@ export class EmailInboundController {
   }
 
   @Post('email/resend')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Receive Resend inbound webhook' })
   async receiveResend(

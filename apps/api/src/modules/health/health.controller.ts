@@ -14,4 +14,23 @@ export class HealthController {
   check() {
     return this.healthService.check();
   }
+
+  @Get('live')
+  @Public()
+  @ApiOperation({ summary: 'Liveness probe' })
+  live() {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  }
+
+  @Get('ready')
+  @Public()
+  @ApiOperation({ summary: 'Readiness probe' })
+  async ready() {
+    const result = await this.healthService.check();
+    return {
+      status: result.status === 'ok' ? 'ok' : 'not_ready',
+      timestamp: new Date().toISOString(),
+      checks: result.checks,
+    };
+  }
 }

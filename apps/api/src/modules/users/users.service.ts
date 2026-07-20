@@ -281,7 +281,6 @@ export class UsersService {
     });
 
     this.logger.log(`Invitation sent to ${email} for tenant ${tenantId}`);
-    this.logger.debug(`Invite token: ${inviteToken}`);
 
     return { ...user, inviteToken };
   }
@@ -305,7 +304,7 @@ export class UsersService {
       },
     });
 
-    this.logger.debug(`Invite resent token: ${inviteToken}`);
+
 
     return { inviteToken };
   }

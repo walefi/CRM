@@ -78,10 +78,18 @@ export class PipelinesService {
   }
 
   async updateStage(id: string, tenantId: string, dto: UpdateStageDto) {
+    const stage = await this.prisma.pipelineStage.findFirst({
+      where: { id, pipeline: { tenantId } },
+    });
+    if (!stage) throw new NotFoundException('Stage not found');
     return this.prisma.pipelineStage.update({ where: { id }, data: dto });
   }
 
-  async deleteStage(id: string) {
+  async deleteStage(id: string, tenantId: string) {
+    const stage = await this.prisma.pipelineStage.findFirst({
+      where: { id, pipeline: { tenantId } },
+    });
+    if (!stage) throw new NotFoundException('Stage not found');
     return this.prisma.pipelineStage.delete({ where: { id } });
   }
 

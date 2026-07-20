@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -6,7 +6,7 @@ export class CalendarService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getEvents(tenantId: string, userId: string, startDate?: string, endDate?: string) {
-    const where: any = { userId };
+    const where: any = { userId, calendar: { tenantId } };
     if (startDate && endDate) {
       where.startAt = { gte: new Date(startDate) };
       where.endAt = { lte: new Date(endDate) };
@@ -48,6 +48,8 @@ export class CalendarService {
 
   async updateEvent(id: string, tenantId: string, dto: any) {
     const prismaAny = this.prisma as any;
+    const existing = await prismaAny.event.findFirst({ where: { id, calendar: { tenantId } } });
+    if (!existing) throw new NotFoundException(`Event ${id} not found`);
     const data: any = {};
     if (dto.title) data.title = dto.title;
     if (dto.description !== undefined) data.description = dto.description;
@@ -60,8 +62,10 @@ export class CalendarService {
     return prismaAny.event.update({ where: { id }, data, include: { participants: true, reminders: true } });
   }
 
-  async deleteEvent(id: string) {
+  async deleteEvent(id: string, tenantId: string) {
     const prismaAny = this.prisma as any;
+    const existing = await prismaAny.event.findFirst({ where: { id, calendar: { tenantId } } });
+    if (!existing) throw new NotFoundException(`Event ${id} not found`);
     await prismaAny.eventReminder.deleteMany({ where: { eventId: id } });
     await prismaAny.eventParticipant.deleteMany({ where: { eventId: id } });
     await prismaAny.eventResource.deleteMany({ where: { eventId: id } });
@@ -84,6 +88,8 @@ export class CalendarService {
 
   async invite(tenantId: string, eventId: string, participants: any[]) {
     const prismaAny = this.prisma as any;
+    const existing = await prismaAny.event.findFirst({ where: { id: eventId, calendar: { tenantId } } });
+    if (!existing) throw new NotFoundException(`Event ${eventId} not found`);
     if (participants?.length) {
       await prismaAny.eventParticipant.createMany({
         data: participants.map((p: any) => ({ eventId, name: p.name, email: p.email, role: p.role || 'attendee' })),

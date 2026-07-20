@@ -51,6 +51,8 @@ export class DocumentsService {
 
   async updateDocument(tenantId: string, id: string, dto: any) {
     const prismaAny = this.prisma as any;
+    const existing = await prismaAny.file.findFirst({ where: { id, tenantId, deletedAt: null } });
+    if (!existing) throw new NotFoundException(`Document ${id} not found`);
     const data: any = {};
     if (dto.name !== undefined) data.name = dto.name;
     if (dto.description !== undefined) data.description = dto.description;
@@ -62,12 +64,16 @@ export class DocumentsService {
   }
 
   async deleteDocument(tenantId: string, id: string) {
-    return (this.prisma as any).file.update({ where: { id }, data: { deletedAt: new Date() } });
+    const prismaAny = this.prisma as any;
+    const existing = await prismaAny.file.findFirst({ where: { id, tenantId, deletedAt: null } });
+    if (!existing) throw new NotFoundException(`Document ${id} not found`);
+    return prismaAny.file.update({ where: { id }, data: { deletedAt: new Date() } });
   }
 
   async addVersion(tenantId: string, userId: string, dto: any) {
     const prismaAny = this.prisma as any;
-    const doc = await prismaAny.file.findUnique({ where: { id: dto.fileId } });
+    const doc = await prismaAny.file.findFirst({ where: { id: dto.fileId, tenantId, deletedAt: null } });
+    if (!doc) throw new NotFoundException(`Document ${dto.fileId} not found`);
     const newVersion = (doc.version || 1) + 1;
     await prismaAny.file.update({ where: { id: dto.fileId }, data: { version: newVersion, url: dto.url, size: dto.size || doc.size, hash: dto.hash } });
     return prismaAny.documentVersion.create({
@@ -91,7 +97,8 @@ export class DocumentsService {
 
   async toggleFavorite(tenantId: string, id: string) {
     const prismaAny = this.prisma as any;
-    const doc = await prismaAny.file.findUnique({ where: { id } });
+    const doc = await prismaAny.file.findFirst({ where: { id, tenantId, deletedAt: null } });
+    if (!doc) throw new NotFoundException(`Document ${id} not found`);
     return prismaAny.file.update({ where: { id }, data: { isFavorite: !doc.isFavorite } });
   }
 

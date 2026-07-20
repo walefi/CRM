@@ -102,8 +102,8 @@ export class PipelinesController {
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete stage' })
-  deleteStage(@Param('id') id: string) {
-    return this.pipelinesService.deleteStage(id);
+  deleteStage(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
+    return this.pipelinesService.deleteStage(id, tenantId);
   }
 
   @Post('kanban/move')

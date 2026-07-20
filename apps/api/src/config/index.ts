@@ -22,8 +22,8 @@ export const redisConfig = defineConfig(() => ({
 }));
 
 export const jwtConfig = defineConfig(() => ({
-  secret: process.env.JWT_SECRET || 'default-secret',
-  refreshSecret: process.env.JWT_REFRESH_SECRET || 'default-refresh-secret',
+  secret: process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('JWT_SECRET is required in production') })() : 'dev-only-jwt-secret-do-not-use-in-production'),
+  refreshSecret: process.env.JWT_REFRESH_SECRET || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('JWT_REFRESH_SECRET is required in production') })() : 'dev-only-refresh-secret-do-not-use-in-production'),
   expiration: process.env.JWT_EXPIRATION || '15m',
   refreshExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
 }));
@@ -42,7 +42,7 @@ export const bullConfig = defineConfig(() => ({
 }));
 
 export const securityConfig = defineConfig(() => ({
-  encryptionKey: process.env.ENCRYPTION_KEY || '32-char-encryption-key-here!!',
+  encryptionKey: process.env.ENCRYPTION_KEY || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('ENCRYPTION_KEY is required in production') })() : 'dev-only-encryption-key-do-not-use'),
   rateLimitTtl: parseInt(process.env.RATE_LIMIT_TTL || '60', 10),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
