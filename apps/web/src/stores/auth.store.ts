@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '@crm/shared';
 
 interface AuthState {
@@ -8,10 +8,12 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  _hasHydrated: boolean;
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   clearAuth: () => void;
   setLoading: (isLoading: boolean) => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -21,7 +23,8 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      isLoading: true,
+      isLoading: false,
+      _hasHydrated: false,
       setAuth: (user, accessToken, refreshToken) => {
         if (typeof window !== 'undefined') {
           localStorage.setItem('accessToken', accessToken);
@@ -44,12 +47,28 @@ export const useAuthStore = create<AuthState>()(
         });
       },
       setLoading: (isLoading) => set({ isLoading }),
+      setHasHydrated: (_hasHydrated) => set({ _hasHydrated }),
     }),
     {
       name: 'crm-auth',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => {
+        return (state) => {
+          state?.setHasHydrated(true);
+        };
+      },
     },
   ),
 );
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('auth:logout', () => {
+    useAuthStore.getState().clearAuth();
+  });
+}

@@ -100,7 +100,7 @@ export class CompaniesService {
 
     this.eventBus
       .publish(new CompanyCreatedEvent(company as any, tenantId, ownerId))
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish CompanyCreatedEvent: ${error.message}`));
 
     return company;
   }

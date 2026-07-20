@@ -142,22 +142,24 @@ export class UsersService {
       parallelism: 4,
     });
 
+    const userStatus = dto.status?.toUpperCase() === 'INVITED' ? 'INVITED' : 'ACTIVE';
+
     const user = await this.prisma.user.create({
       data: {
         email: dto.email.toLowerCase(),
         password: hashedPassword,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        title: dto.title,
-        phone: dto.phone,
+        title: dto.title || null,
+        phone: dto.phone || null,
         timezone: dto.timezone || 'America/Sao_Paulo',
         language: dto.language || 'pt-BR',
         role: dto.role || 'user',
-        status: 'ACTIVE',
-        teamId: dto.teamId,
-        departmentId: dto.departmentId,
+        status: userStatus,
+        teamId: dto.teamId || null,
+        departmentId: dto.departmentId || null,
         tenantId,
-        emailVerifiedAt: new Date(),
+        emailVerifiedAt: userStatus === 'ACTIVE' ? new Date() : null,
       },
       select: {
         id: true,

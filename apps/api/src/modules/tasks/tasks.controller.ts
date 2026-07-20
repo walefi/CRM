@@ -101,4 +101,56 @@ export class TasksController {
   ) {
     return this.tasksService.createActivity(tenantId, dto, userId);
   }
+
+  // Projects
+  @Get('projects')
+  @ApiOperation({ summary: 'List projects' })
+  getProjects(@CurrentUser('tenantId') tenantId: string, @Query() dto: any) {
+    return this.tasksService.getProjects(tenantId, dto);
+  }
+
+  @Post('projects')
+  @Roles('admin', 'manager')
+  @ApiOperation({ summary: 'Create project' })
+  createProject(@CurrentUser('tenantId') tenantId: string, @CurrentUser('id') userId: string, @Body() dto: any) {
+    return this.tasksService.createProject(tenantId, userId, dto);
+  }
+
+  @Get('projects/:id')
+  @ApiOperation({ summary: 'Get project' })
+  getProject(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {
+    return this.tasksService.getProject(tenantId, id);
+  }
+
+  @Patch('projects/:id')
+  @Roles('admin', 'manager')
+  @ApiOperation({ summary: 'Update project' })
+  updateProject(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string, @Body() dto: any) {
+    return this.tasksService.updateProject(tenantId, id, dto);
+  }
+
+  @Delete('projects/:id')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Delete project' })
+  deleteProject(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {
+    return this.tasksService.deleteProject(tenantId, id);
+  }
+
+  @Post('dependency')
+  @ApiOperation({ summary: 'Create task dependency' })
+  createDependency(@CurrentUser('tenantId') tenantId: string, @Body() dto: any) {
+    return this.tasksService.createDependency(tenantId, dto);
+  }
+
+  @Get('workload')
+  @ApiOperation({ summary: 'Get workload distribution' })
+  getWorkload(@CurrentUser('tenantId') tenantId: string, @Query('userId') userId?: string) {
+    return this.tasksService.getWorkload(tenantId, userId);
+  }
+
+  @Get('project-stats')
+  @ApiOperation({ summary: 'Project & task statistics' })
+  getProjectStats(@CurrentUser('tenantId') tenantId: string) {
+    return this.tasksService.getProjectStats(tenantId);
+  }
 }

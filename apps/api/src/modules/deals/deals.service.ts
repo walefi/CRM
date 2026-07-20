@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDealDto, UpdateDealDto, DealFilterDto } from './dto/deals.dto';
 import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
@@ -10,6 +10,7 @@ import {
 
 @Injectable()
 export class DealsService {
+  private readonly logger = new Logger(DealsService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
@@ -97,7 +98,8 @@ export class DealsService {
       },
     });
 
-    this.eventBus.publish(new DealCreatedEvent(deal as any, tenantId, userId)).catch(() => {});
+    this.eventBus.publish(new DealCreatedEvent(deal as any, tenantId, userId))
+      .catch((error: any) => this.logger.warn(`Failed to publish DealCreatedEvent: ${error.message}`));
 
     return deal;
   }
@@ -111,9 +113,11 @@ export class DealsService {
     });
 
     if (dto.status === 'WON') {
-      this.eventBus.publish(new DealWonEvent(deal as any, tenantId, userId)).catch(() => {});
+      this.eventBus.publish(new DealWonEvent(deal as any, tenantId, userId))
+        .catch((error: any) => this.logger.warn(`Failed to publish DealWonEvent: ${error.message}`));
     } else if (dto.status === 'LOST') {
-      this.eventBus.publish(new DealLostEvent(deal as any, tenantId, userId)).catch(() => {});
+      this.eventBus.publish(new DealLostEvent(deal as any, tenantId, userId))
+        .catch((error: any) => this.logger.warn(`Failed to publish DealLostEvent: ${error.message}`));
     }
 
     return deal;
@@ -125,10 +129,28 @@ export class DealsService {
   }
 
   async duplicate(id: string, tenantId: string) {
-    const original = (await this.findById(id, tenantId)) as any;
-    const { ...data } = original;
+    const original = await this.prisma.deal.findFirst({
+      where: { id, tenantId, deletedAt: null },
+      select: {
+        id: true,
+        tenantId: true,
+        title: true,
+        value: true,
+        status: true,
+        stageId: true,
+        pipelineId: true,
+        ownerId: true,
+        companyId: true,
+        contactId: true,
+        expectedCloseAt: true,
+        description: true,
+        priority: true,
+      },
+    });
+    if (!original) throw new NotFoundException('Deal not found');
+    const { id: _id, ...data } = original;
     return this.prisma.deal.create({
-      data: { ...data, title: `${data.title} (Copia)`, createdAt: undefined },
+      data: { ...data, title: `${data.title} (Copia)` },
       include: { owner: { select: { id: true, firstName: true, lastName: true } } },
     });
   }

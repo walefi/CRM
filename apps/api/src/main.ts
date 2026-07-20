@@ -21,7 +21,10 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('API_PORT', 3001);
-  const corsOrigin = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
+  const corsOriginRaw = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
+  const corsOrigin = corsOriginRaw.includes(',')
+    ? corsOriginRaw.split(',').map((o) => o.trim())
+    : corsOriginRaw;
 
   app.use(
     helmet({
@@ -64,6 +67,7 @@ async function bootstrap() {
       'X-Request-Id',
       'X-Correlation-Id',
       'X-Tenant-Id',
+      'X-Api-Key',
     ],
     exposedHeaders: ['X-Request-Id', 'X-Correlation-Id'],
     maxAge: 86400,
@@ -136,6 +140,31 @@ async function bootstrap() {
     .addTag('HelpDesk', 'Ticket support & knowledge base')
     .addTag('Portal', 'Customer self-service portal')
     .addTag('Timeline', 'Unified timeline 360°')
+    .addTag('Documents', 'Enterprise document management')
+    .addTag('Signatures', 'Electronic signature platform')
+    .addTag('SalesOrders', 'Sales order management')
+    .addTag('Inventory', 'Inventory & warehouse')
+    .addTag('Procurement', 'Procurement & purchasing')
+    .addTag('Financial', 'Financial management')
+    .addTag('Billing', 'Billing, invoicing & fiscal')
+    .addTag('CustomerSuccess', 'Customer success & subscriptions')
+    .addTag('HR', 'HR & workforce management')
+    .addTag('Assets', 'Asset & maintenance management')
+    .addTag('Manufacturing', 'Manufacturing & production')
+    .addTag('Quality', 'Quality management')
+    .addTag('Logistics', 'Logistics & transportation')
+    .addTag('ControlTower', 'Supply chain control tower')
+    .addTag('BI', 'Business intelligence & data warehouse')
+    .addTag('AI-ML', 'AI, ML & decision intelligence')
+    .addTag('Gateway', 'API gateway & marketplace')
+    .addTag('Security', 'Identity, security & compliance')
+    .addTag('Observability', 'Observability & monitoring')
+    .addTag('DevOps', 'DevSecOps & platform engineering')
+    .addTag('BPMN', 'Workflow automation, BPMN & low-code')
+    .addTag('Knowledge', 'Knowledge management & enterprise search')
+    .addTag('Collaboration', 'Collaboration & productivity')
+    .addTag('CX', 'Customer experience & contact center')
+    .addTag('RevOps', 'Sales & revenue operations')
     .addTag('Search', 'Global search engine')
     .addTag('Analytics', 'Business intelligence & dashboards')
     .addTag('Reports', 'Report engine & exports')

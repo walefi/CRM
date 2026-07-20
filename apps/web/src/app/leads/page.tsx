@@ -129,6 +129,16 @@ export default function LeadsPage() {
                 <Badge variant={(statusColors[l.status] as any) || 'secondary'}>{l.status}</Badge>
               ),
             },
+            {
+              key: 'owner',
+              header: 'Responsável',
+              render: (l: any) =>
+                l.owner ? (
+                  <span className="text-sm">{l.owner.firstName} {l.owner.lastName}</span>
+                ) : (
+                  <span className="text-sm text-muted-foreground italic">Não atribuído</span>
+                ),
+            },
           ]}
           searchPlaceholder="Buscar leads..."
           onCreate={() => {

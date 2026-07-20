@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
 import { BaseDomainEvent } from '../../infrastructure/event-bus/domain-events';
@@ -6,6 +6,7 @@ import {
   ISearchProvider,
   SearchQuery,
   IndexDocumentInput,
+  SEARCH_PROVIDER,
 } from './providers/search-provider.interface';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class SearchService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
+    @Inject(SEARCH_PROVIDER)
     private readonly searchProvider: ISearchProvider,
   ) {}
 
@@ -28,7 +30,7 @@ export class SearchService {
         query,
         result.meta.total,
         result.meta.durationMs,
-      ).catch(() => {});
+      ).catch((error: any) => this.logger.warn(`Failed to save search history: ${error.message}`));
     }
     return result;
   }
@@ -59,7 +61,7 @@ export class SearchService {
           tenantId,
         }),
       )
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish search.reindexed event: ${error.message}`));
     this.logger.log(`Reindex complete: ${result.indexed} documents`);
     return result;
   }

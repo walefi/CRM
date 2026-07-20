@@ -202,7 +202,7 @@ export class IntegrationsService {
           tenantId,
         }),
       )
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish integration.connected event: ${error.message}`));
 
     return this.findById(tenantId, id);
   }
@@ -225,7 +225,7 @@ export class IntegrationsService {
           tenantId,
         }),
       )
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish integration.disconnected event: ${error.message}`));
 
     return this.findById(tenantId, id);
   }
@@ -248,9 +248,8 @@ export class IntegrationsService {
     });
 
     try {
-      // Simulate sync
-      const records = dto.direction === 'import' ? Math.floor(Math.random() * 50) + 5 : 0;
-      const failed = Math.floor(Math.random() * 3);
+      const records = 0;
+      const failed = 0;
 
       await prismaAny.integrationSync.update({
         where: { id: syncRecord.id },
@@ -280,7 +279,7 @@ export class IntegrationsService {
             userId,
           }),
         )
-        .catch(() => {});
+        .catch((error: any) => this.logger.warn(`Failed to publish sync.completed event: ${error.message}`));
     } catch (error: any) {
       await prismaAny.integrationSync.update({
         where: { id: syncRecord.id },
@@ -294,14 +293,13 @@ export class IntegrationsService {
 
   async test(_tenantId: string, _id: string) {
     const start = Date.now();
-    const success = Math.random() > 0.1;
     const durationMs = Date.now() - start;
 
     return {
-      success,
+      success: false,
       provider: 'integration-hub',
       latencyMs: durationMs,
-      message: success ? 'Connection successful' : 'Connection failed: timeout',
+      message: 'Integration test recorded. Actual connectivity test requires configured credentials.',
       testedAt: new Date().toISOString(),
     };
   }
@@ -417,6 +415,6 @@ export class IntegrationsService {
           userId: data.userId,
         },
       })
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to write integration webhook log: ${error.message}`));
   }
 }

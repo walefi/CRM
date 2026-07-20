@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
 import { QueueModule } from './infrastructure/queue/queue.module';
 import { EventBusModule } from './infrastructure/event-bus/event-bus.module';
+import { EncryptionModule } from './infrastructure/encryption/encryption.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -28,9 +29,35 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ConversationsModule } from './modules/conversations/conversations.module';
+import { EmailModule } from './modules/email/email.module';
 import { HelpDeskModule } from './modules/tickets/help-desk.module';
 import { PortalModule } from './modules/portal/portal.module';
 import { TimelineModule } from './modules/timeline/timeline.module';
+import { DocumentsModule } from './modules/documents/documents.module';
+import { SignaturesModule } from './modules/signatures/signatures.module';
+import { SalesOrdersModule } from './modules/sales-orders/sales-orders.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { ProcurementModule } from './modules/procurement/procurement.module';
+import { FinancialModule } from './modules/financial/financial.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { CustomerSuccessModule } from './modules/customer-success/customer-success.module';
+import { HrModule } from './modules/hr/hr.module';
+import { AssetsModule } from './modules/assets/assets.module';
+import { ManufacturingModule } from './modules/manufacturing/manufacturing.module';
+import { QualityModule } from './modules/quality/quality.module';
+import { LogisticsModule } from './modules/logistics/logistics.module';
+import { ControlTowerModule } from './modules/control-tower/control-tower.module';
+import { BiModule } from './modules/bi/bi.module';
+import { AiMlModule } from './modules/ai-ml/ai-ml.module';
+import { GatewayModule } from './modules/gateway/gateway.module';
+import { SecurityModule } from './modules/security/security.module';
+import { ObservabilityApiModule } from './modules/observability/observability-api.module';
+import { DevopsModule } from './modules/devops/devops.module';
+import { BpmnModule } from './modules/bpmn/bpmn.module';
+import { KmModule } from './modules/km/km.module';
+import { CollaborationModule } from './modules/collaboration/collaboration.module';
+import { CxModule } from './modules/cx/cx.module';
+import { RevopsModule } from './modules/revops/revops.module';
 import { AutomationsModule } from './modules/automations/automations.module';
 import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { QuotesModule } from './modules/quotes/quotes.module';
@@ -38,6 +65,7 @@ import { ContractsModule } from './modules/contracts/contracts.module';
 import { SearchModule } from './modules/search/search.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { ObservabilityModule } from './infrastructure/observability/observability.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantGuard } from './common/guards/tenant.guard';
@@ -68,6 +96,7 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     CacheModule,
     QueueModule,
     EventBusModule,
+    EncryptionModule,
     ObservabilityModule,
     PrismaModule,
     HealthModule,
@@ -92,9 +121,35 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     IntegrationsModule,
     AiModule,
     ConversationsModule,
+    EmailModule,
     HelpDeskModule,
     PortalModule,
     TimelineModule,
+    DocumentsModule,
+    SignaturesModule,
+    SalesOrdersModule,
+    InventoryModule,
+    ProcurementModule,
+    FinancialModule,
+    BillingModule,
+    CustomerSuccessModule,
+    HrModule,
+    AssetsModule,
+    ManufacturingModule,
+    QualityModule,
+    LogisticsModule,
+    ControlTowerModule,
+    BiModule,
+    AiMlModule,
+    GatewayModule,
+    SecurityModule,
+    ObservabilityApiModule,
+    DevopsModule,
+    BpmnModule,
+    KmModule,
+    CollaborationModule,
+    CxModule,
+    RevopsModule,
     AutomationsModule,
     WorkflowsModule,
     QuotesModule,
@@ -102,6 +157,7 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     SearchModule,
     AnalyticsModule,
     ReportsModule,
+    WebhooksModule,
   ],
   providers: [
     {

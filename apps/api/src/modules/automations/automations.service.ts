@@ -200,7 +200,7 @@ export class AutomationsService {
           userId,
         }),
       )
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish automation.created event: ${error.message}`));
 
     this.logger.log(`Automation "${automation.name}" created by ${userId}`);
     return automation;
@@ -348,7 +348,7 @@ export class AutomationsService {
           userId,
         }),
       )
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish automation.published event: ${error.message}`));
 
     this.logger.log(`Automation "${automation.name}" published by ${userId}`);
     return automation;
@@ -615,7 +615,7 @@ export class AutomationsService {
             userId,
           }),
         )
-        .catch(() => {});
+        .catch((error: any) => this.logger.warn(`Failed to publish automation.execution.completed event: ${error.message}`));
 
       this.logger.log(`Automation ${id} execution ${execution.id} completed`);
       return prismaAny.automationExecution.findUnique({ where: { id: execution.id } });
@@ -651,7 +651,7 @@ export class AutomationsService {
             userId,
           }),
         )
-        .catch(() => {});
+        .catch((err: any) => this.logger.warn(`Failed to publish automation.execution.failed event: ${err.message}`));
 
       this.logger.error(`Automation ${id} execution ${execution.id} failed: ${error.message}`);
       return prismaAny.automationExecution.findUnique({ where: { id: execution.id } });

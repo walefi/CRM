@@ -173,3 +173,128 @@ export class ConvertLeadDto {
   @IsString()
   target: 'contact' | 'company' | 'deal';
 }
+
+export class LeadIntakeDto {
+  @ApiProperty({ example: 'João' })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
+  name: string;
+
+  @ApiPropertyOptional({ example: 'joao@example.com' })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiPropertyOptional({ example: '+5511999999999' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({ example: 'Acme Inc' })
+  @IsOptional()
+  @IsString()
+  company?: string;
+
+  @ApiPropertyOptional({ example: 'Interested in product X' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  message?: string;
+
+  @ApiProperty({ enum: LeadSource, example: LeadSource.WEBSITE })
+  @IsEnum(LeadSource)
+  source: LeadSource;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  sourceDetails?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  metadata?: Record<string, unknown>;
+
+  @ApiProperty({ example: 'tenant-123' })
+  @IsString()
+  tenantId: string;
+}
+
+export class PublicLeadIntakeDto {
+  @ApiProperty({ example: 'João Silva' })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
+  name: string;
+
+  @ApiPropertyOptional({ example: 'joao@example.com' })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiPropertyOptional({ example: '+5511999999999' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({ example: 'Acme Inc' })
+  @IsOptional()
+  @IsString()
+  company?: string;
+
+  @ApiPropertyOptional({ example: 'Interested in product X' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  message?: string;
+
+  @ApiProperty({ enum: LeadSource, example: LeadSource.WEBSITE })
+  @IsEnum(LeadSource)
+  source: LeadSource;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  sourceDetails?: string;
+
+  @ApiPropertyOptional({ description: 'Honeypot field - must be empty' })
+  @IsOptional()
+  @IsString()
+  website?: string;
+}
+
+export class AssignLeadDto {
+  @ApiProperty({ example: 'user-456' })
+  @IsString()
+  userId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  reason?: string;
+}
+
+export class DistributeLeadDto {
+  @ApiPropertyOptional({ enum: ['round_robin', 'manual'], example: 'round_robin' })
+  @IsOptional()
+  @IsString()
+  strategy?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  userId?: string;
+}
+
+export interface DistributionConfig {
+  strategy: 'round_robin' | 'manual' | 'capacity' | 'source';
+  enabled: boolean;
+  fallbackOwnerId?: string;
+}
+
+export interface RoundRobinState {
+  lastIndex: number;
+  tenantId: string;
+}

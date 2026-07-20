@@ -181,11 +181,10 @@ export class AiService {
       dto.systemPrompt || 'Você é um assistente CRM inteligente. Responda de forma concisa e útil.';
     const messages = dto.messages || [{ role: 'user', content: dto.message }];
 
-    // Simulate AI response
-    const response = this.simulateAIResponse(model, messages[messages.length - 1]?.content || '');
+    const response = `Serviço de IA não configurado. Configure um provedor de IA (OpenAI, Anthropic, etc.) para habilitar respostas inteligentes. Modelo solicitado: ${model}`;
 
-    const tokens = 150 + Math.floor(Math.random() * 200);
-    const cost = (tokens / 1000) * 0.01;
+    const tokens = 0;
+    const cost = 0;
     const durationMs = Date.now() - start;
 
     const conversation = await prismaAny.aIConversation.create({
@@ -201,17 +200,7 @@ export class AiService {
       },
     });
 
-    await this.trackUsage(
-      tenantId,
-      userId,
-      model,
-      provider,
-      tokens,
-      cost,
-      durationMs,
-      'chat',
-      true,
-    );
+    await this.trackUsage(tenantId, userId, model, provider, tokens, cost, durationMs, 'chat', false);
 
     return {
       id: conversation.id,
@@ -231,22 +220,12 @@ export class AiService {
     const prompt = dto.prompt || '';
     const start = Date.now();
 
-    const response = this.simulateCompletion(model, prompt);
-    const tokens = 50 + Math.floor(Math.random() * 100);
-    const cost = (tokens / 1000) * 0.005;
+    const response = `Serviço de IA não configurado. Configure um provedor de IA para habilitar completions. Modelo: ${model}`;
+    const tokens = 0;
+    const cost = 0;
     const durationMs = Date.now() - start;
 
-    await this.trackUsage(
-      tenantId,
-      userId,
-      model,
-      provider,
-      tokens,
-      cost,
-      durationMs,
-      'complete',
-      true,
-    );
+    await this.trackUsage(tenantId, userId, model, provider, tokens, cost, durationMs, 'complete', false);
 
     return { model, provider, response, tokens, cost, durationMs };
   }
@@ -320,22 +299,12 @@ export class AiService {
     const provider = agent?.provider || 'openai';
     const start = Date.now();
 
-    const response = this.simulateAgentResponse(agent?.name || 'Agent', dto.input || '');
-    const tokens = 200 + Math.floor(Math.random() * 300);
-    const cost = (tokens / 1000) * 0.02;
+    const response = `Serviço de IA não configurado. Agente "${agent?.name || 'desconhecido'}" não pode ser executado sem um provedor de IA configurado.`;
+    const tokens = 0;
+    const cost = 0;
     const durationMs = Date.now() - start;
 
-    await this.trackUsage(
-      tenantId,
-      userId,
-      model,
-      provider,
-      tokens,
-      cost,
-      durationMs,
-      'agent_run',
-      true,
-    );
+    await this.trackUsage(tenantId, userId, model, provider, tokens, cost, durationMs, 'agent_run', false);
 
     return {
       agentId: dto.agentId,
@@ -486,9 +455,9 @@ export class AiService {
 
   // Embeddings
   async embed(tenantId: string, dto: any) {
-    const embeddingVector = Array.from({ length: 1536 }, () => Math.random() * 2 - 1);
+    const embeddingVector = new Array(1536).fill(0);
     const tokens = Math.ceil(dto.content.length / 4);
-    const cost = (tokens / 1000) * 0.0001;
+    const cost = 0;
 
     await (this.prisma as any).aIEmbedding.upsert({
       where: { entityType_entityId: { entityType: dto.entityType, entityId: dto.entityId } },
@@ -506,17 +475,6 @@ export class AiService {
       update: { content: dto.content, embedding: embeddingVector, tokens, cost },
     });
 
-    await this.trackUsage(
-      tenantId,
-      undefined,
-      'text-embedding-3-small',
-      'openai',
-      tokens,
-      cost,
-      0,
-      'embed',
-      true,
-    );
     return { entityType: dto.entityType, entityId: dto.entityId, dimensions: 1536, tokens, cost };
   }
 
@@ -544,55 +502,7 @@ export class AiService {
       .create({
         data: { model, provider, tokens, cost, durationMs, endpoint, success, tenantId, userId },
       })
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to record AI usage: ${error.message}`));
   }
 
-  private simulateAIResponse(_model: string, _message: string): string {
-    const responses = [
-      `Com base na sua solicitação, analisei os dados do CRM e encontrei as seguintes informações relevantes.
-
-**Resumo:**
-- Leads ativos: ${Math.floor(Math.random() * 50) + 10}
-- Negócios em andamento: ${Math.floor(Math.random() * 20) + 5}
-- Taxa de conversão: ${(Math.random() * 40 + 10).toFixed(1)}%
-
-**Recomendação:**
-Focar nos leads que entraram nos últimos 7 dias, pois têm maior probabilidade de conversão.`,
-      `Analisando o pipeline de vendas:
-
-1. **Top 3 oportunidades:** 3 negócios com valor acima de R$ 10.000
-2. **Gargalo identificado:** Etapa de "Proposta" com tempo médio de 12 dias
-3. **Sugestão:** Automatizar follow-ups na etapa de proposta para reduzir o ciclo em 40%
-
-Deseja que eu crie uma automação para isso?`,
-      `📊 **Resumo Executivo - ${new Date().toLocaleDateString('pt-BR')}**
-
-| Métrica | Valor |
-|---------|-------|
-| Leads novos | ${Math.floor(Math.random() * 30) + 5} |
-| Conversões | ${Math.floor(Math.random() * 10) + 2} |
-| Receita prevista | R$ ${(Math.random() * 100000 + 20000).toFixed(0)} |
-| Atividades | ${Math.floor(Math.random() * 40) + 10} |
-
-**Insight:** O canal "WhatsApp" está gerando 3x mais conversões que email. Considere aumentar o investimento nesse canal.`,
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
-
-  private simulateCompletion(model: string, prompt: string): string {
-    return `Resposta para: "${prompt.substring(0, 50)}..." (modelo: ${model})
-
-Análise concluída. Os dados indicam uma tendência positiva no período analisado, com crescimento de ${(Math.random() * 20 + 5).toFixed(1)}% em relação ao período anterior.`;
-  }
-
-  private simulateAgentResponse(agentName: string, input: string): string {
-    return `[${agentName}] Processando: "${input.substring(0, 80)}..."
-
-**Ações executadas:**
-1. Analisei o contexto do CRM
-2. Identifiquei padrões relevantes
-3. Gerei recomendações baseadas nos dados
-
-**Resposta:** Encontrei ${Math.floor(Math.random() * 5) + 1} itens que correspondem ao seu critério. As principais recomendações estão prontas para revisão.`;
-  }
 }

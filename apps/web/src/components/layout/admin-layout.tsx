@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthStore } from '@/stores/auth.store';
+import api from '@/lib/api';
 import {
   LayoutDashboard,
   Users,
@@ -79,6 +81,8 @@ const navigation: NavGroup[] = [
     label: 'CRM',
     items: [
       { label: 'Leads', icon: <Target className="h-5 w-5" />, href: '/leads' },
+      { label: 'Distribuição', icon: <Target className="h-5 w-5" />, href: '/leads/distribution' },
+      { label: 'API Keys', icon: <Target className="h-5 w-5" />, href: '/leads/api-keys' },
       { label: 'Contatos', icon: <Users className="h-5 w-5" />, href: '/contacts' },
       { label: 'Empresas', icon: <Building2 className="h-5 w-5" />, href: '/companies' },
       { label: 'Negócios', icon: <DollarSign className="h-5 w-5" />, href: '/deals' },
@@ -134,9 +138,37 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
+  const { clearAuth, refreshToken, _hasHydrated } = useAuthStore();
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const { data } = await api.get('/notifications/stats');
+      setUnreadCount(data?.unreadCount ?? data?.unread ?? 0);
+    } catch {
+      // Silent - notifications are non-critical
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!_hasHydrated) return;
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount, _hasHydrated]);
+
+  async function handleLogout() {
+    try {
+      await api.post('/auth/logout', { refreshToken });
+    } catch {
+      // Continue with local cleanup even if server call fails
+    }
+    clearAuth();
+    router.push('/');
+  }
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -310,9 +342,18 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
           <div className="flex-1" />
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => router.push('/notifications')}
+          >
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Button>
 
           {/* User Menu */}
@@ -348,7 +389,7 @@ export function AdminLayout({ children, user, tenant }: AdminLayoutProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
+                <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Sair
                 </DropdownMenuItem>

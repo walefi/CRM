@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface QuoteDrawerProps {
   open: boolean;
@@ -587,8 +588,14 @@ export function QuoteDrawer({ open, onClose, quote, onSuccess }: QuoteDrawerProp
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              api.post(`/quotes/${quote.id}/send`).then(() => onSuccess());
+                            onClick={async () => {
+                              try {
+                                await api.post(`/quotes/${quote.id}/send`);
+                                toast.success('Proposta enviada com sucesso');
+                                onSuccess();
+                              } catch (e: any) {
+                                toast.error(e.response?.data?.message || 'Erro ao enviar proposta');
+                              }
                             }}
                           >
                             <Send className="h-4 w-4 mr-1" /> Enviar

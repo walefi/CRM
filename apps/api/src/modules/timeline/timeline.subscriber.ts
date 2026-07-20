@@ -17,6 +17,18 @@ export class TimelineSubscriber {
   async onLeadConverted(e: IDomainEvent) {
     await this.record(e, 'lead', 'converted');
   }
+  @OnEvent('lead.assigned')
+  async onLeadAssigned(e: IDomainEvent) {
+    await this.record(e, 'lead', 'assigned');
+  }
+  @OnEvent('lead.reassigned')
+  async onLeadReassigned(e: IDomainEvent) {
+    await this.record(e, 'lead', 'reassigned');
+  }
+  @OnEvent('lead.intake')
+  async onLeadIntake(e: IDomainEvent) {
+    await this.record(e, 'lead', 'intake');
+  }
   @OnEvent('contact.created')
   async onContactCreated(e: IDomainEvent) {
     await this.record(e, 'contact', 'created');
@@ -88,6 +100,26 @@ export class TimelineSubscriber {
   @OnEvent('ticket.created')
   async onTicketCreated(e: IDomainEvent) {
     await this.record(e, 'ticket', 'created');
+  }
+  @OnEvent('message.created')
+  async onMessageCreated(e: IDomainEvent) {
+    await this.record(e, 'message', 'created');
+  }
+  @OnEvent('message.sent')
+  async onMessageSent(e: IDomainEvent) {
+    await this.record(e, 'message', 'sent');
+  }
+  @OnEvent('message.received')
+  async onMessageReceived(e: IDomainEvent) {
+    await this.record(e, 'message', 'received');
+  }
+  @OnEvent('message.delivered')
+  async onMessageDelivered(e: IDomainEvent) {
+    await this.record(e, 'message', 'delivered');
+  }
+  @OnEvent('message.failed')
+  async onMessageFailed(e: IDomainEvent) {
+    await this.record(e, 'message', 'failed');
   }
 
   private async record(event: IDomainEvent, entity: string, action: string) {

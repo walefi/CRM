@@ -1,11 +1,18 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
+import { EncryptionService } from '../../infrastructure/encryption/encryption.service';
+import { MessageCreatedEvent, MessageSentEvent } from '../../infrastructure/event-bus/domain-events';
 
 @Injectable()
 export class ConversationsService {
   private readonly logger = new Logger(ConversationsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventBus: EventBusService,
+    private readonly encryptionService: EncryptionService,
+  ) {}
 
   async getConversations(tenantId: string, dto: any) {
     const prismaAny = this.prisma as any;
@@ -98,7 +105,7 @@ export class ConversationsService {
         conversationId: dto.conversationId,
         content: dto.content,
         direction: 'OUTBOUND',
-        channel: dto.channel || 'WEBCHAT',
+        channel: dto.channel || 'CHAT',
         messageType: dto.messageType || 'text',
         senderId: userId,
         status: 'sent',
@@ -115,6 +122,28 @@ export class ConversationsService {
       },
     });
 
+    try {
+      const messageEvent = new MessageCreatedEvent(
+        { ...message, conversationId: dto.conversationId, direction: 'OUTBOUND' },
+        tenantId,
+        userId,
+      );
+      await this.eventBus.publish(messageEvent);
+    } catch (error: any) {
+      this.logger.warn(`Failed to publish message.created event: ${error.message}`);
+    }
+
+    try {
+      const sentEvent = new MessageSentEvent(
+        { ...message, conversationId: dto.conversationId },
+        tenantId,
+        userId,
+      );
+      await this.eventBus.publish(sentEvent);
+    } catch (error: any) {
+      this.logger.warn(`Failed to publish message.sent event: ${error.message}`);
+    }
+
     return message;
   }
 
@@ -123,7 +152,7 @@ export class ConversationsService {
     return prismaAny.conversation.create({
       data: {
         subject: dto.subject,
-        channel: dto.channel || 'WEBCHAT',
+        channel: dto.channel || 'CHAT',
         status: 'active',
         priority: dto.priority || 'normal',
         tags: dto.tags || [],
@@ -193,21 +222,36 @@ export class ConversationsService {
 
   async connectChannel(tenantId: string, dto: any) {
     const prismaAny = this.prisma as any;
+    const credentialsToStore = dto.credentials
+      ? this.encryptionService.isAvailable()
+        ? this.encryptionService.encryptObject(dto.credentials, Object.keys(dto.credentials))
+        : dto.credentials
+      : {};
     return prismaAny.channel.upsert({
       where: { type_tenantId: { type: dto.type, tenantId } },
       create: {
         type: dto.type,
         name: dto.name || dto.type,
-        credentials: (dto.credentials as any) || {},
+        credentials: credentialsToStore,
         config: (dto.config as any) || {},
+        webhookSecret: dto.webhookSecret
+          ? this.encryptionService.isAvailable()
+            ? this.encryptionService.encrypt(dto.webhookSecret)
+            : dto.webhookSecret
+          : undefined,
         isConnected: true,
         healthScore: 'healthy',
         tenantId,
       },
       update: {
         name: dto.name,
-        credentials: dto.credentials as any,
+        credentials: credentialsToStore,
         config: dto.config as any,
+        webhookSecret: dto.webhookSecret
+          ? this.encryptionService.isAvailable()
+            ? this.encryptionService.encrypt(dto.webhookSecret)
+            : dto.webhookSecret
+          : undefined,
         isActive: true,
         isConnected: true,
       },
@@ -216,6 +260,8 @@ export class ConversationsService {
 
   async disconnectChannel(tenantId: string, channelId: string) {
     const prismaAny = this.prisma as any;
+    const channel = await prismaAny.channel.findFirst({ where: { id: channelId, tenantId } });
+    if (!channel) throw new Error('Channel not found');
     return prismaAny.channel.update({
       where: { id: channelId },
       data: { isActive: false, isConnected: false },
@@ -276,16 +322,17 @@ export class ConversationsService {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const [active, messagesToday, channels, queues] = await Promise.all([
+    const [active, messagesToday, channels, queues, onlineAgents] = await Promise.all([
       prismaAny.conversation.count({
         where: { tenantId, status: { in: ['active', 'assigned', 'waiting'] } },
       }),
       prismaAny.message.count({ where: { tenantId, createdAt: { gte: todayStart } } }),
       prismaAny.channel.count({ where: { tenantId, isActive: true } }),
       prismaAny.conversationQueue.count({ where: { tenantId, isActive: true } }),
+      prismaAny.user.count({
+        where: { tenantId, status: 'ACTIVE', sessions: { some: { expiresAt: { gt: new Date() } } } },
+      }),
     ]);
-
-    const onlineAgents = 1;
 
     return {
       activeConversations: active,
@@ -293,7 +340,6 @@ export class ConversationsService {
       channels,
       queues,
       onlineAgents,
-      slaStatus: { inTime: active, breached: 0, atRisk: 0 },
     };
   }
 }

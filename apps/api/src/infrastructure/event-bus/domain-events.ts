@@ -78,6 +78,45 @@ export class LeadConvertedEvent extends BaseDomainEvent {
   }
 }
 
+export class LeadAssignedEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'lead.assigned',
+      aggregateType: 'Lead',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class LeadReassignedEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'lead.reassigned',
+      aggregateType: 'Lead',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class LeadIntakeEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'lead.intake',
+      aggregateType: 'Lead',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
 export class ContactCreatedEvent extends BaseDomainEvent {
   constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
     super({
@@ -187,6 +226,71 @@ export class TaskCompletedEvent extends BaseDomainEvent {
     super({
       eventName: 'task.completed',
       aggregateType: 'Task',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class MessageCreatedEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'message.created',
+      aggregateType: 'Message',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class MessageSentEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'message.sent',
+      aggregateType: 'Message',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class MessageReceivedEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'message.received',
+      aggregateType: 'Message',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class MessageDeliveredEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'message.delivered',
+      aggregateType: 'Message',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class MessageFailedEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'message.failed',
+      aggregateType: 'Message',
       aggregateId: payload.id as string,
       payload,
       tenantId,

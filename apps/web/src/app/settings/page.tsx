@@ -23,6 +23,15 @@ import {
   Loader2,
   Upload,
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 
@@ -67,6 +76,26 @@ const smtpSchema = z.object({
   senderEmail: z.string().email().optional().or(z.literal('')),
 });
 
+const notificationsSchema = z.object({
+  emailNotifications: z.boolean().optional(),
+  browserNotifications: z.boolean().optional(),
+  notificationFrequency: z.string().optional(),
+});
+
+const securitySchema = z.object({
+  twoFactorAuth: z.boolean().optional(),
+  sessionTimeout: z.coerce.number().optional(),
+  minPasswordLength: z.coerce.number().optional(),
+  ipWhitelist: z.string().optional(),
+});
+
+const filesSchema = z.object({
+  maxFileSize: z.coerce.number().optional(),
+  allowedFileTypes: z.string().optional(),
+  storageProvider: z.string().optional(),
+  storagePath: z.string().optional(),
+});
+
 export default function SettingsPage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('general');
@@ -77,6 +106,9 @@ export default function SettingsPage() {
   const brandingForm = useForm({ resolver: zodResolver(brandingSchema) });
   const regionalForm = useForm({ resolver: zodResolver(regionalSchema) });
   const smtpForm = useForm({ resolver: zodResolver(smtpSchema) });
+  const notificationsForm = useForm({ resolver: zodResolver(notificationsSchema) });
+  const securityForm = useForm({ resolver: zodResolver(securitySchema) });
+  const filesForm = useForm({ resolver: zodResolver(filesSchema) });
 
   async function saveSection(section: string, data: unknown) {
     setLoading(true);
@@ -469,29 +501,220 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Placeholders */}
+          {/* Notifications */}
           <TabsContent value="notifications">
             <Card>
               <CardHeader>
                 <CardTitle>Notificações</CardTitle>
-                <CardDescription>Em desenvolvimento</CardDescription>
+                <CardDescription>Configure como deseja receber notificações</CardDescription>
               </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={notificationsForm.handleSubmit((d) => saveSection('notifications', d))}
+                  className="space-y-4"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Notificações por e-mail</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Receber notificações importantes por e-mail
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationsForm.watch('emailNotifications')}
+                        onCheckedChange={(v) => notificationsForm.setValue('emailNotifications', v)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Notificações no navegador</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Receber notificações push no navegador
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationsForm.watch('browserNotifications')}
+                        onCheckedChange={(v) =>
+                          notificationsForm.setValue('browserNotifications', v)
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Frequência de notificações</Label>
+                    <Select
+                      value={notificationsForm.watch('notificationFrequency')}
+                      onValueChange={(v) => notificationsForm.setValue('notificationFrequency', v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a frequência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="realtime">Tempo real</SelectItem>
+                        <SelectItem value="hourly">A cada hora</SelectItem>
+                        <SelectItem value="daily">Resumo diário</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Salvar
+                  </Button>
+                </form>
+              </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Security */}
           <TabsContent value="security">
             <Card>
               <CardHeader>
                 <CardTitle>Segurança</CardTitle>
-                <CardDescription>Em desenvolvimento</CardDescription>
+                <CardDescription>Configurações de segurança da conta</CardDescription>
               </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={securityForm.handleSubmit((d) => saveSection('security', d))}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Autenticação em duas etapas</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Adicione uma camada extra de segurança à sua conta
+                      </p>
+                    </div>
+                    <Switch
+                      checked={securityForm.watch('twoFactorAuth')}
+                      onCheckedChange={(v) => securityForm.setValue('twoFactorAuth', v)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Timeout da sessão</Label>
+                    <Select
+                      value={String(securityForm.watch('sessionTimeout') ?? '')}
+                      onValueChange={(v) => securityForm.setValue('sessionTimeout', Number(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o timeout" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30">30 minutos</SelectItem>
+                        <SelectItem value="60">1 hora</SelectItem>
+                        <SelectItem value="240">4 horas</SelectItem>
+                        <SelectItem value="480">8 horas</SelectItem>
+                        <SelectItem value="1440">24 horas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Comprimento mínimo da senha</Label>
+                    <Input
+                      type="number"
+                      min={6}
+                      max={32}
+                      placeholder="8"
+                      {...securityForm.register('minPasswordLength')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Lista de IPs permitidos</Label>
+                    <Textarea
+                      placeholder={"192.168.1.0/24\n10.0.0.0/8\n203.0.113.50"}
+                      className="h-32 font-mono text-sm"
+                      {...securityForm.register('ipWhitelist')}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Um IP ou CIDR por linha. Deixe vazio para permitir todos.
+                    </p>
+                  </div>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Salvar
+                  </Button>
+                </form>
+              </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Files */}
           <TabsContent value="files">
             <Card>
               <CardHeader>
                 <CardTitle>Arquivos</CardTitle>
-                <CardDescription>Em desenvolvimento</CardDescription>
+                <CardDescription>Configurações de upload e armazenamento</CardDescription>
               </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={filesForm.handleSubmit((d) => saveSection('files', d))}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Tamanho máximo do arquivo (MB)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        placeholder="10"
+                        {...filesForm.register('maxFileSize')}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Tipos de arquivo permitidos</Label>
+                      <Input
+                        placeholder="pdf,docx,xlsx,jpg,png"
+                        {...filesForm.register('allowedFileTypes')}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Separados por vírgula, ex: pdf,docx,xlsx,jpg,png
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Provedor de armazenamento</Label>
+                    <Select
+                      value={filesForm.watch('storageProvider')}
+                      onValueChange={(v) => filesForm.setValue('storageProvider', v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o provedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="local">Local</SelectItem>
+                        <SelectItem value="s3">Amazon S3</SelectItem>
+                        <SelectItem value="azure">Azure Blob Storage</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Caminho de armazenamento</Label>
+                    <Input
+                      placeholder="./uploads"
+                      {...filesForm.register('storagePath')}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Diretório local ou prefixo do bucket para armazenar arquivos
+                    </p>
+                  </div>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Salvar
+                  </Button>
+                </form>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

@@ -165,7 +165,7 @@ export class PostgresqlSearchProvider implements ISearchProvider {
           metadata: (doc.metadata as any) || {},
           url: doc.url,
           tenantId,
-          score: 0,
+          score: this.computeScore(doc),
         },
       });
     }
@@ -352,5 +352,17 @@ export class PostgresqlSearchProvider implements ISearchProvider {
     const prismaAny = this.prisma as any;
     const count = await prismaAny.searchIndex.count();
     return { status: 'healthy', provider: 'postgresql', indexedCount: count };
+  }
+
+  private computeScore(doc: IndexDocumentInput): number {
+    let score = 0;
+    if (doc.title) score += Math.min(doc.title.length, 50);
+    if (doc.subtitle) score += Math.min(doc.subtitle.length * 0.5, 25);
+    if (doc.content) {
+      const contentStr = typeof doc.content === 'string' ? doc.content : JSON.stringify(doc.content);
+      score += Math.min(contentStr.length * 0.1, 100);
+    }
+    if (doc.tags && doc.tags.length > 0) score += doc.tags.length * 5;
+    return Math.round(score);
   }
 }

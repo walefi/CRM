@@ -51,7 +51,7 @@ export default function PortalDashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-            <Link href="#" className="group">
+            <Link href="/conversations" className="group">
               <Card className="hover:border-primary/50 transition-colors h-full">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">

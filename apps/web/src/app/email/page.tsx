@@ -1,8 +1,15 @@
 'use client';
 
-import { ModulePage } from '@/components/layout/module-page';
-import { Mail } from 'lucide-react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export default function Page() {
-  return <ModulePage title="E-mail" icon={<Mail className="h-10 w-10" />} />;
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/conversations?channel=EMAIL');
+  }, [router]);
+
+  return <LoadingScreen />;
 }

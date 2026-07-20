@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateContactDto, UpdateContactDto, ContactFilterDto } from './dto/contacts.dto';
 import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
@@ -6,6 +6,7 @@ import { ContactCreatedEvent } from '../../infrastructure/event-bus/domain-event
 
 @Injectable()
 export class ContactsService {
+  private readonly logger = new Logger(ContactsService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
@@ -77,7 +78,7 @@ export class ContactsService {
 
     this.eventBus
       .publish(new ContactCreatedEvent(contact as any, tenantId, userId))
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish ContactCreatedEvent: ${error.message}`));
 
     return contact;
   }

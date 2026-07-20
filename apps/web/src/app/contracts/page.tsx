@@ -26,6 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 import { ContractDrawer } from './contract-drawer';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -242,9 +243,14 @@ export default function ContractsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() =>
-                          api.post(`/contracts/${contract.id}/send`).then(() => refetch())
-                        }
+                        onClick={async () => {
+                          try {
+                            await api.post(`/contracts/${contract.id}/send`);
+                            refetch();
+                          } catch (e: any) {
+                            toast.error(e.response?.data?.message || 'Erro ao enviar contrato');
+                          }
+                        }}
                       >
                         <Send className="h-3.5 w-3.5 mr-1" />
                       </Button>

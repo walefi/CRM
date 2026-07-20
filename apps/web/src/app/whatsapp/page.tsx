@@ -1,8 +1,15 @@
 'use client';
 
-import { ModulePage } from '@/components/layout/module-page';
-import { Phone } from 'lucide-react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export default function Page() {
-  return <ModulePage title="WhatsApp" icon={<Phone className="h-10 w-10" />} />;
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/conversations?channel=WHATSAPP');
+  }, [router]);
+
+  return <LoadingScreen />;
 }

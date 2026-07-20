@@ -29,7 +29,8 @@ export class QuotesService {
 
   private generateNumber(): string {
     const year = new Date().getFullYear();
-    const random = Math.floor(1000 + Math.random() * 9000);
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.floor(1000 + (timestamp.charCodeAt(0) % 1000));
     return `Q-${year}-${random}`;
   }
 

@@ -74,4 +74,68 @@ export class ProductsService {
     ]);
     return { total, active, byCategory };
   }
+
+  // CPQ & PRICING
+  async getPriceBooks(tenantId: string) {
+    return (this.prisma as any).priceBook.findMany({ where: { tenantId, isActive: true }, orderBy: { name: 'asc' } });
+  }
+
+  async createPriceBook(tenantId: string, userId: string, dto: any) {
+    return (this.prisma as any).priceBook.create({ data: { name: dto.name, description: dto.description, currency: dto.currency || 'BRL', isDefault: dto.isDefault || false, rules: (dto.rules as any) || [], tenantId, createdBy: userId } });
+  }
+
+  async getBundles(tenantId: string) {
+    return (this.prisma as any).bundle.findMany({ where: { tenantId, isActive: true }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createBundle(tenantId: string, userId: string, dto: any) {
+    return (this.prisma as any).bundle.create({ data: { name: dto.name, description: dto.description, type: dto.type || 'bundle', price: dto.price, items: (dto.items as any) || [], rules: (dto.rules as any) || {}, tenantId, createdBy: userId } });
+  }
+
+  async getDiscounts(tenantId: string) {
+    return (this.prisma as any).discountRule.findMany({ where: { tenantId, isActive: true }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createDiscount(tenantId: string, userId: string, dto: any) {
+    return (this.prisma as any).discountRule.create({ data: { name: dto.name, type: dto.type || 'percentage', value: dto.value || 0, minQuantity: dto.minQuantity, maxPercent: dto.maxPercent, requiresApproval: dto.requiresApproval || false, tags: dto.tags || [], tenantId, createdBy: userId } });
+  }
+
+  async calculatePrice(tenantId: string, dto: any) {
+    const prismaAny = this.prisma as any;
+    let subtotal = 0;
+    const items = (dto.items || []).map((item: any) => {
+      const lineTotal = (item.price || 0) * (item.quantity || 1);
+      subtotal += lineTotal;
+      return { ...item, lineTotal, discount: 0 };
+    });
+
+    let discount = 0;
+    if (dto.discountId) {
+      const rule = await prismaAny.discountRule.findFirst({ where: { id: dto.discountId } });
+      if (rule) {
+        discount = rule.type === 'percentage' ? subtotal * (rule.value / 100) : rule.value;
+      }
+    } else if (dto.discountPercent) {
+      discount = subtotal * (dto.discountPercent / 100);
+    }
+
+    const total = subtotal - discount;
+    const taxRate = dto.taxRate || 0;
+    const tax = total * (taxRate / 100);
+    const grandTotal = total + tax;
+
+    return { items, subtotal, discount, discountPercent: dto.discountPercent || 0, tax, taxRate, total: grandTotal };
+  }
+
+  async getCPQStats(tenantId: string) {
+    const prismaAny = this.prisma as any;
+    const [total, priceBooks, bundles, discounts, quotes] = await Promise.all([
+      this.prisma.product.count({ where: { tenantId, deletedAt: null } }),
+      prismaAny.priceBook.count({ where: { tenantId, isActive: true } }),
+      prismaAny.bundle.count({ where: { tenantId, isActive: true } }),
+      prismaAny.discountRule.count({ where: { tenantId, isActive: true } }),
+      this.prisma.quoteItem.count({ where: { quote: { tenantId } } }),
+    ]);
+    return { totalProducts: total, priceBooks, bundles, discounts, quoteItems: quotes };
+  }
 }

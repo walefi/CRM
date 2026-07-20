@@ -826,8 +826,8 @@ export class WorkflowsService {
         this.logger.log(`AI call with model ${model}, prompt: ${prompt.substring(0, 100)}...`);
         return {
           status: 'success',
-          output: { model, response: 'AI response placeholder' },
-          message: `AI call to ${model} completed`,
+          output: { model, response: null, configured: false },
+          message: `AI call recorded. AI provider not configured for model ${model}.`,
         };
       }
 

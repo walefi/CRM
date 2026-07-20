@@ -1,5 +1,7 @@
-import { IsString, IsOptional, IsEmail, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsEmail, MinLength, MaxLength, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+const VALID_STATUSES = ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'INVITED', 'PENDING'] as const;
 
 export class CreateUserDto {
   @ApiProperty({ example: 'user@example.com' })
@@ -44,10 +46,15 @@ export class CreateUserDto {
   @IsString()
   language?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'admin' })
   @IsOptional()
   @IsString()
   role?: string;
+
+  @ApiPropertyOptional({ enum: VALID_STATUSES, example: 'ACTIVE' })
+  @IsOptional()
+  @IsIn(VALID_STATUSES as unknown as string[])
+  status?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

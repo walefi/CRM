@@ -2,14 +2,26 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { EntityService } from '../../shared/services/entity.service';
 import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
-import { LeadCreatedEvent, LeadConvertedEvent } from '../../infrastructure/event-bus/domain-events';
-import { CreateLeadDto, UpdateLeadDto, LeadFilterDto, ConvertLeadDto } from './dto/leads.dto';
+import {
+  LeadCreatedEvent,
+  LeadConvertedEvent,
+  LeadIntakeEvent,
+} from '../../infrastructure/event-bus/domain-events';
+import {
+  CreateLeadDto,
+  UpdateLeadDto,
+  LeadFilterDto,
+  ConvertLeadDto,
+  LeadIntakeDto,
+} from './dto/leads.dto';
+import { LeadDistributionService } from './lead-distribution.service';
 
 @Injectable()
 export class LeadsService extends EntityService<CreateLeadDto, UpdateLeadDto> {
   constructor(
     protected readonly prisma: PrismaService,
     private readonly eventBus: EventBusService,
+    private readonly distributionService: LeadDistributionService,
   ) {
     super(prisma, prisma.lead, 'Lead');
   }
@@ -88,7 +100,7 @@ export class LeadsService extends EntityService<CreateLeadDto, UpdateLeadDto> {
     this.logger.log(`Lead "${lead.firstName} ${lead.lastName}" created`);
     this.eventBus
       .publish(new LeadCreatedEvent(lead as Record<string, unknown>, tenantId, userId))
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish LeadCreatedEvent: ${error.message}`));
     return lead;
   }
 
@@ -162,7 +174,7 @@ export class LeadsService extends EntityService<CreateLeadDto, UpdateLeadDto> {
           _userId,
         ),
       )
-      .catch(() => {});
+      .catch((error: any) => this.logger.warn(`Failed to publish LeadConvertedEvent: ${error.message}`));
 
     return { success: true, target: dto.target, result };
   }
@@ -183,5 +195,147 @@ export class LeadsService extends EntityService<CreateLeadDto, UpdateLeadDto> {
     ]);
 
     return { total, byStatus, bySource };
+  }
+
+  async intake(tenantId: string, dto: LeadIntakeDto) {
+    const normalizedName = dto.name.trim();
+    const nameParts = normalizedName.split(/\s+/);
+    const firstName = nameParts[0] || normalizedName;
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : normalizedName;
+
+    const normalizedEmail = dto.email?.trim().toLowerCase() || null;
+
+    if (normalizedEmail) {
+      const existingLead = await this.prisma.lead.findFirst({
+        where: {
+          tenantId,
+          email: normalizedEmail,
+          deletedAt: null,
+          status: { notIn: ['CONVERTED', 'LOST'] },
+        },
+        include: { owner: { select: { id: true, firstName: true, lastName: true } } },
+      });
+
+      if (existingLead) {
+        this.logger.log(
+          `Duplicate lead detected: email=${normalizedEmail} existingLeadId=${existingLead.id}`,
+        );
+
+        await this.prisma.lead.update({
+          where: { id: existingLead.id },
+          data: {
+            ...(dto.phone && { phone: dto.phone }),
+            ...(dto.company && { companyName: dto.company }),
+            ...(dto.message && { description: dto.message }),
+          },
+        });
+
+        this.eventBus
+          .publish(
+            new LeadIntakeEvent(
+              {
+                id: existingLead.id,
+                isDuplicate: true,
+                originalLeadId: existingLead.id,
+                source: dto.source,
+                message: dto.message,
+              },
+              tenantId,
+            ),
+          )
+          .catch((error: any) =>
+            this.logger.warn(`Failed to publish LeadIntakeEvent: ${error.message}`),
+          );
+
+        return {
+          lead: existingLead,
+          isDuplicate: true,
+          message: 'Lead existente atualizado com novas informações',
+        };
+      }
+    }
+
+    if (normalizedEmail) {
+      const existingContact = await this.prisma.contact.findFirst({
+        where: { tenantId, email: normalizedEmail, deletedAt: null },
+        select: { id: true },
+      });
+
+      if (existingContact) {
+        this.logger.log(
+          `Existing contact found for intake email=${normalizedEmail} contactId=${existingContact.id}`,
+        );
+      }
+    }
+
+    const lead = await this.prisma.lead.create({
+      data: {
+        firstName,
+        lastName,
+        email: normalizedEmail,
+        phone: dto.phone,
+        companyName: dto.company,
+        source: dto.source,
+        sourceInfo: dto.sourceDetails,
+        description: dto.message,
+        status: 'NEW',
+        tenantId,
+      },
+      include: { owner: { select: { id: true, firstName: true, lastName: true } } },
+    });
+
+    this.logger.log(`Lead created via intake: ${lead.id} (${firstName} ${lastName})`);
+
+    this.eventBus
+      .publish(new LeadCreatedEvent(lead as Record<string, unknown>, tenantId))
+      .catch((error: any) =>
+        this.logger.warn(`Failed to publish LeadCreatedEvent: ${error.message}`),
+      );
+
+    this.eventBus
+      .publish(
+        new LeadIntakeEvent(
+          {
+            id: lead.id,
+            isDuplicate: false,
+            source: dto.source,
+            message: dto.message,
+          },
+          tenantId,
+        ),
+      )
+      .catch((error: any) =>
+        this.logger.warn(`Failed to publish LeadIntakeEvent: ${error.message}`),
+      );
+
+    let distributionResult = null;
+    try {
+      const distributionConfig = await this.distributionService.getConfig(tenantId);
+      if (distributionConfig.enabled) {
+        if (distributionConfig.strategy === 'round_robin') {
+          distributionResult = await this.distributionService.distributeRoundRobin(
+            tenantId,
+            lead.id,
+            { firstName, lastName, email: normalizedEmail || undefined, source: dto.source },
+          );
+        }
+      } else {
+        this.logger.log(`Lead distribution disabled for tenant ${tenantId}, skipping auto-assignment`);
+      }
+    } catch (error: any) {
+      this.logger.warn(`Auto-distribution failed for lead ${lead.id}: ${error.message}`);
+    }
+
+    const assignedLead = await this.prisma.lead.findFirst({
+      where: { id: lead.id },
+      include: { owner: { select: { id: true, firstName: true, lastName: true } } },
+    });
+
+    return {
+      lead: assignedLead,
+      isDuplicate: false,
+      distribution: distributionResult,
+      message: 'Lead criado e distribuído com sucesso',
+    };
   }
 }

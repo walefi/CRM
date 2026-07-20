@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface ContractDrawerProps {
   open: boolean;
@@ -603,9 +604,15 @@ export function ContractDrawer({ open, onClose, contract, onSuccess }: ContractD
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() =>
-                          api.post(`/contracts/${contract.id}/send`).then(() => onSuccess())
-                        }
+                        onClick={async () => {
+                          try {
+                            await api.post(`/contracts/${contract.id}/send`);
+                            toast.success('Contrato enviado para assinatura');
+                            onSuccess();
+                          } catch (e: any) {
+                            toast.error(e.response?.data?.message || 'Erro ao enviar contrato');
+                          }
+                        }}
                       >
                         <Send className="h-4 w-4 mr-1" />
                         Enviar p/ Assinatura

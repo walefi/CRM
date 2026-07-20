@@ -132,6 +132,8 @@ export class HelpDeskService {
 
   async addComment(tenantId: string, id: string, userId: string, dto: any) {
     const prismaAny = this.prisma as any;
+    const ticket = await prismaAny.ticket.findFirst({ where: { id, tenantId } });
+    if (!ticket) throw new Error('Ticket not found');
     const comment = await prismaAny.ticketComment.create({
       data: { ticketId: id, content: dto.content, isInternal: dto.isInternal || false, userId },
     });
@@ -141,6 +143,8 @@ export class HelpDeskService {
 
   async assignTicket(tenantId: string, id: string, userId: string) {
     const prismaAny = this.prisma as any;
+    const ticket = await prismaAny.ticket.findFirst({ where: { id, tenantId } });
+    if (!ticket) throw new Error('Ticket not found');
     await prismaAny.ticketHistory.create({
       data: { ticketId: id, action: 'assigned', userId, field: 'assignedToId', newValue: userId },
     });
@@ -152,6 +156,8 @@ export class HelpDeskService {
 
   async closeTicket(tenantId: string, id: string, userId: string) {
     const prismaAny = this.prisma as any;
+    const ticket = await prismaAny.ticket.findFirst({ where: { id, tenantId } });
+    if (!ticket) throw new Error('Ticket not found');
     await prismaAny.ticketHistory.create({ data: { ticketId: id, action: 'closed', userId } });
     return prismaAny.ticket.update({
       where: { id },
@@ -161,13 +167,14 @@ export class HelpDeskService {
 
   async reopenTicket(tenantId: string, id: string, userId: string) {
     const prismaAny = this.prisma as any;
-    const existing = await prismaAny.ticket.findUnique({ where: { id } });
+    const ticket = await prismaAny.ticket.findFirst({ where: { id, tenantId } });
+    if (!ticket) throw new Error('Ticket not found');
     await prismaAny.ticketHistory.create({ data: { ticketId: id, action: 'reopened', userId } });
     return prismaAny.ticket.update({
       where: { id },
       data: {
         status: 'open',
-        reopenedCount: (existing?.reopenedCount || 0) + 1,
+        reopenedCount: (ticket?.reopenedCount || 0) + 1,
         closedAt: null,
         updatedAt: new Date(),
       },
@@ -230,11 +237,14 @@ export class HelpDeskService {
   }
 
   async updateArticle(tenantId: string, id: string, dto: any) {
+    const prismaAny = this.prisma as any;
+    const existing = await prismaAny.knowledgeArticle.findFirst({ where: { id, tenantId } });
+    if (!existing) throw new Error('Article not found');
     const data: any = {};
     for (const [k, v] of Object.entries(dto)) {
       if (v !== undefined) data[k] = v;
     }
-    return (this.prisma as any).knowledgeArticle.update({ where: { id }, data });
+    return prismaAny.knowledgeArticle.update({ where: { id }, data });
   }
 
   async deleteArticle(tenantId: string, id: string) {
@@ -269,7 +279,6 @@ export class HelpDeskService {
       slaBreached,
       backlog,
       articles,
-      avgSatisfaction: 90,
     };
   }
 

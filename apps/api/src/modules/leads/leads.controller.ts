@@ -13,7 +13,14 @@
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { LeadsService } from './leads.service';
-import { CreateLeadDto, UpdateLeadDto, LeadFilterDto, ConvertLeadDto } from './dto/leads.dto';
+import { LeadDistributionService } from './lead-distribution.service';
+import {
+  CreateLeadDto,
+  UpdateLeadDto,
+  LeadFilterDto,
+  ConvertLeadDto,
+  AssignLeadDto,
+} from './dto/leads.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -25,7 +32,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
 @Controller('leads')
 export class LeadsController {
-  constructor(private readonly leadsService: LeadsService) {}
+  constructor(
+    private readonly leadsService: LeadsService,
+    private readonly distributionService: LeadDistributionService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List leads with filters and pagination' })
@@ -94,5 +104,24 @@ export class LeadsController {
     @CurrentUser('id') userId: string,
   ) {
     return this.leadsService.convert(tenantId, id, dto, userId);
+  }
+
+  @Post(':id/assign')
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Manually assign lead to a user' })
+  assign(
+    @Param('id') id: string,
+    @Body() dto: AssignLeadDto,
+    @CurrentUser('tenantId') tenantId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.distributionService.assignManual(
+      tenantId,
+      id,
+      dto.userId,
+      userId,
+      dto.reason,
+    );
   }
 }

@@ -1,12 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 import { QueueService } from '../../infrastructure/queue/queue.service';
+import { StorageAdapter } from '../../infrastructure/storage/storage.adapter';
 import { APP_VERSION } from '../../shared/constants/app.constants';
 
 interface HealthCheck {
   status: 'ok' | 'error' | 'degraded';
   latency: number;
+  details?: Record<string, unknown>;
 }
 
 export interface HealthResult {
@@ -27,6 +29,7 @@ export class HealthService {
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
     private readonly queueService: QueueService,
+    @Optional() @Inject('StorageAdapter') private readonly storage?: StorageAdapter,
   ) {}
 
   async check(): Promise<HealthResult> {
@@ -39,6 +42,14 @@ export class HealthService {
       checks.queue = await this.checkQueue();
     } catch {
       checks.queue = { status: 'degraded', latency: 0 };
+    }
+
+    if (this.storage) {
+      try {
+        checks.storage = await this.checkStorage();
+      } catch {
+        checks.storage = { status: 'error', latency: 0 };
+      }
     }
 
     const statuses = Object.values(checks).map((c) => c.status);
@@ -88,8 +99,26 @@ export class HealthService {
       return {
         status: hasFailed ? 'degraded' : 'ok',
         latency: Date.now() - start,
+        details: health,
       };
     } catch {
+      return { status: 'error', latency: Date.now() - start };
+    }
+  }
+
+  private async checkStorage(): Promise<HealthCheck> {
+    const start = Date.now();
+    try {
+      const testKey = `__health_check_${Date.now()}`;
+      const testData = Buffer.from('health-check');
+      await this.storage!.put(testKey, testData);
+      const retrieved = await this.storage!.get(testKey);
+      await this.storage!.delete(testKey);
+
+      const healthy = retrieved !== null && retrieved.equals(testData);
+      return { status: healthy ? 'ok' : 'error', latency: Date.now() - start };
+    } catch (error) {
+      this.logger.error('Storage health check failed', error);
       return { status: 'error', latency: Date.now() - start };
     }
   }

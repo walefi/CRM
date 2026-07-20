@@ -209,11 +209,14 @@ export class AuthService {
       }
 
       const session = await this.prisma.session.findFirst({
-        where: { token: refreshToken },
+        where: {
+          token: refreshToken,
+          expiresAt: { gt: new Date() },
+        },
       });
 
       if (!session) {
-        await this.logoutAll(user.id);
+        await this.prisma.session.deleteMany({ where: { userId: user.id } });
         throw new UnauthorizedException('Session expired');
       }
 
@@ -295,9 +298,8 @@ export class AuthService {
     });
 
     this.logger.log(`Password reset token generated for ${user.email}`);
-    this.logger.debug(`Reset token: ${resetToken}`);
 
-    return { token: resetToken };
+    return { message: 'If the email exists, a reset link has been sent' };
   }
 
   async resetPassword(
@@ -427,9 +429,8 @@ export class AuthService {
     });
 
     this.logger.log(`Verification email resent to ${user.email}`);
-    this.logger.debug(`Verification token: ${verificationToken}`);
 
-    return { token: verificationToken };
+    return { message: 'If the email exists, a verification link has been sent' };
   }
 
   async getProfile(userId: string) {

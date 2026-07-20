@@ -11,7 +11,7 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
@@ -82,5 +82,57 @@ export class ProductsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteCategory(@Param('id') id: string) {
     return this.productsService.deleteCategory(id);
+  }
+
+  // CPQ
+  @Get('pricebooks')
+  @ApiOperation({ summary: 'List price books' })
+  getPriceBooks(@CurrentUser('tenantId') tenantId: string) {
+    return this.productsService.getPriceBooks(tenantId);
+  }
+
+  @Post('pricebooks')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Create price book' })
+  createPriceBook(@CurrentUser('tenantId') tenantId: string, @CurrentUser('id') userId: string, @Body() dto: any) {
+    return this.productsService.createPriceBook(tenantId, userId, dto);
+  }
+
+  @Get('bundles')
+  @ApiOperation({ summary: 'List bundles' })
+  getBundles(@CurrentUser('tenantId') tenantId: string) {
+    return this.productsService.getBundles(tenantId);
+  }
+
+  @Post('bundles')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Create bundle' })
+  createBundle(@CurrentUser('tenantId') tenantId: string, @CurrentUser('id') userId: string, @Body() dto: any) {
+    return this.productsService.createBundle(tenantId, userId, dto);
+  }
+
+  @Get('discounts')
+  @ApiOperation({ summary: 'List discount rules' })
+  getDiscounts(@CurrentUser('tenantId') tenantId: string) {
+    return this.productsService.getDiscounts(tenantId);
+  }
+
+  @Post('discounts')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Create discount rule' })
+  createDiscount(@CurrentUser('tenantId') tenantId: string, @CurrentUser('id') userId: string, @Body() dto: any) {
+    return this.productsService.createDiscount(tenantId, userId, dto);
+  }
+
+  @Post('calculate')
+  @ApiOperation({ summary: 'Calculate CPQ price simulation' })
+  calculatePrice(@CurrentUser('tenantId') tenantId: string, @Body() dto: any) {
+    return this.productsService.calculatePrice(tenantId, dto);
+  }
+
+  @Get('cpq-stats')
+  @ApiOperation({ summary: 'Product catalog statistics' })
+  getCPQStats(@CurrentUser('tenantId') tenantId: string) {
+    return this.productsService.getCPQStats(tenantId);
   }
 }

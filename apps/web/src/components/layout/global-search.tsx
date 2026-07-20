@@ -23,6 +23,7 @@ import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useAuthStore } from '@/stores/auth.store';
 
 const entityIcons: Record<string, any> = {
   lead: User,
@@ -80,6 +81,7 @@ export function GlobalSearchModal() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const _hasHydrated = useAuthStore((s) => s._hasHydrated);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,16 +105,15 @@ export function GlobalSearchModal() {
   }, [open]);
 
   useEffect(() => {
-    if (history.length === 0) {
-      api
-        .get('/search/history', { params: { limit: 5 } })
-        .then((r) => {
-          const queries: string[] = (r.data?.data || []).map((h: any) => h.query).filter(Boolean);
-          setHistory([...new Set(queries)].slice(0, 5));
-        })
-        .catch(() => {});
-    }
-  }, [open, history.length]);
+    if (!_hasHydrated || history.length > 0) return;
+    api
+      .get('/search/history', { params: { limit: 5 } })
+      .then((r) => {
+        const queries: string[] = (r.data?.data || []).map((h: any) => h.query).filter(Boolean);
+        setHistory([...new Set(queries)].slice(0, 5));
+      })
+      .catch(() => {});
+  }, [open, history.length, _hasHydrated]);
 
   useEffect(() => {
     if (query.trim().length < 2) {

@@ -1,8 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Send, Inbox, Archive, CheckCircle2, UserPlus, Search, RefreshCw } from 'lucide-react';
+import {
+  Send,
+  Inbox,
+  Archive,
+  CheckCircle2,
+  UserPlus,
+  Search,
+  RefreshCw,
+  Filter,
+} from 'lucide-react';
 import api from '@/lib/api';
 import { cn, formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -10,6 +20,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useAuthStore } from '@/stores/auth.store';
 
 const channelLabels: Record<string, string> = {
@@ -18,7 +35,7 @@ const channelLabels: Record<string, string> = {
   FACEBOOK: 'Facebook',
   EMAIL: 'Email',
   SMS: 'SMS',
-  WEBCHAT: 'Webchat',
+  CHAT: 'Chat',
   TELEGRAM: 'Telegram',
   SLACK: 'Slack',
   DISCORD: 'Discord',
@@ -40,19 +57,50 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function ConversationsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-[calc(100vh-8rem)]">
+          <div className="w-80 lg:w-96 border-r flex flex-col shrink-0 bg-card/50">
+            <div className="p-4 space-y-3">
+              <Skeleton className="h-8 w-32" />
+              <Skeleton className="h-10" />
+              <Skeleton className="h-8" />
+            </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <Skeleton className="h-16 w-16 rounded-full" />
+          </div>
+        </div>
+      }
+    >
+      <ConversationsContent />
+    </Suspense>
+  );
+}
+
+function ConversationsContent() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const initialChannel = searchParams.get('channel') || '';
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [channelFilter, setChannelFilter] = useState(initialChannel);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['conversations', search, statusFilter],
+    queryKey: ['conversations', search, statusFilter, channelFilter],
     queryFn: () =>
       api
         .get('/conversations', {
-          params: { search: search || undefined, status: statusFilter || undefined, limit: 30 },
+          params: {
+            search: search || undefined,
+            status: statusFilter || undefined,
+            channel: channelFilter || undefined,
+            limit: 30,
+          },
         })
         .then((r) => r.data),
   });
@@ -79,7 +127,7 @@ export default function ConversationsPage() {
       api.post('/conversations/send', {
         conversationId: selectedId,
         content,
-        channel: conversation?.channel || 'WEBCHAT',
+        channel: conversation?.channel || 'CHAT',
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', selectedId] });
@@ -149,6 +197,22 @@ export default function ConversationsPage() {
               </TabsTrigger>
             </TabsList>
           </Tabs>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={channelFilter} onValueChange={setChannelFilter}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Todos os canais" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os canais</SelectItem>
+                {Object.entries(channelLabels).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-1 p-3 border-b">

@@ -83,6 +83,8 @@ export class TimelineService {
   }
 
   async getComments(tenantId: string, timelineId: string) {
+    const timeline = await (this.prisma as any).timeline.findFirst({ where: { id: timelineId, tenantId } });
+    if (!timeline) return [];
     return (this.prisma as any).timelineComment.findMany({
       where: { timelineId },
       include: { replies: true },
@@ -91,16 +93,26 @@ export class TimelineService {
   }
 
   async addComment(tenantId: string, userId: string, dto: any) {
+    const timeline = await (this.prisma as any).timeline.findFirst({ where: { id: dto.timelineId, tenantId } });
+    if (!timeline) throw new Error('Timeline entry not found');
     return (this.prisma as any).timelineComment.create({
       data: { timelineId: dto.timelineId, content: dto.content, userId, replyToId: dto.replyToId },
     });
   }
 
   async updateComment(tenantId: string, id: string, content: string) {
+    const comment = await (this.prisma as any).timelineComment.findUnique({ where: { id }, select: { id: true, timelineId: true } });
+    if (!comment) throw new Error('Comment not found');
+    const timeline = await (this.prisma as any).timeline.findFirst({ where: { id: comment.timelineId, tenantId } });
+    if (!timeline) throw new Error('Comment not found');
     return (this.prisma as any).timelineComment.update({ where: { id }, data: { content } });
   }
 
   async deleteComment(tenantId: string, id: string) {
+    const comment = await (this.prisma as any).timelineComment.findUnique({ where: { id }, select: { id: true, timelineId: true } });
+    if (!comment) throw new Error('Comment not found');
+    const timeline = await (this.prisma as any).timeline.findFirst({ where: { id: comment.timelineId, tenantId } });
+    if (!timeline) throw new Error('Comment not found');
     await (this.prisma as any).timelineComment.deleteMany({ where: { id } });
   }
 
