@@ -31,5 +31,6 @@ export const QUEUE_NAMES = {
   NOTIFICATIONS: 'notifications',
   AUTOMATIONS: 'automations',
   EMAIL: 'email',
+  WHATSAPP: 'whatsapp',
   AUDIT: 'audit',
 } as const;

@@ -121,6 +121,14 @@ export class TimelineSubscriber {
   async onMessageFailed(e: IDomainEvent) {
     await this.record(e, 'message', 'failed');
   }
+  @OnEvent('whatsapp.template')
+  async onWhatsAppTemplate(e: IDomainEvent) {
+    await this.record(e, 'whatsapp', 'template');
+  }
+  @OnEvent('whatsapp.session_update')
+  async onWhatsAppSessionUpdate(e: IDomainEvent) {
+    await this.record(e, 'whatsapp', 'session_update');
+  }
 
   private async record(event: IDomainEvent, entity: string, action: string) {
     try {

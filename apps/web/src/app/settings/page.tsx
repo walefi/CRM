@@ -22,6 +22,7 @@ import {
   Save,
   Loader2,
   Upload,
+  MessageCircle,
 } from 'lucide-react';
 import {
   Select,
@@ -96,6 +97,15 @@ const filesSchema = z.object({
   storagePath: z.string().optional(),
 });
 
+const whatsappSchema = z.object({
+  appId: z.string().optional(),
+  appSecret: z.string().optional(),
+  phoneNumberId: z.string().optional(),
+  wabaId: z.string().optional(),
+  verifyToken: z.string().optional(),
+  accessToken: z.string().optional(),
+});
+
 export default function SettingsPage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('general');
@@ -109,6 +119,7 @@ export default function SettingsPage() {
   const notificationsForm = useForm({ resolver: zodResolver(notificationsSchema) });
   const securityForm = useForm({ resolver: zodResolver(securitySchema) });
   const filesForm = useForm({ resolver: zodResolver(filesSchema) });
+  const whatsappForm = useForm({ resolver: zodResolver(whatsappSchema) });
 
   async function saveSection(section: string, data: unknown) {
     setLoading(true);
@@ -195,6 +206,10 @@ export default function SettingsPage() {
             <TabsTrigger value="files">
               <Paperclip className="h-4 w-4 mr-2" />
               Arquivos
+            </TabsTrigger>
+            <TabsTrigger value="whatsapp">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              WhatsApp
             </TabsTrigger>
           </TabsList>
 
@@ -625,7 +640,7 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label>Lista de IPs permitidos</Label>
                     <Textarea
-                      placeholder={"192.168.1.0/24\n10.0.0.0/8\n203.0.113.50"}
+                      placeholder={'192.168.1.0/24\n10.0.0.0/8\n203.0.113.50'}
                       className="h-32 font-mono text-sm"
                       {...securityForm.register('ipWhitelist')}
                     />
@@ -697,13 +712,99 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Caminho de armazenamento</Label>
-                    <Input
-                      placeholder="./uploads"
-                      {...filesForm.register('storagePath')}
-                    />
+                    <Input placeholder="./uploads" {...filesForm.register('storagePath')} />
                     <p className="text-xs text-muted-foreground">
                       Diretório local ou prefixo do bucket para armazenar arquivos
                     </p>
+                  </div>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Salvar
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* WhatsApp */}
+          <TabsContent value="whatsapp">
+            <Card>
+              <CardHeader>
+                <CardTitle>WhatsApp Business</CardTitle>
+                <CardDescription>
+                  Configure a integração com a Meta Cloud API para envio e recebimento de mensagens
+                  via WhatsApp
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={whatsappForm.handleSubmit((d) => saveSection('whatsapp', d))}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Meta App ID</Label>
+                      <Input placeholder="123456789" {...whatsappForm.register('appId')} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Meta App Secret</Label>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        {...whatsappForm.register('appSecret')}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone Number ID</Label>
+                      <Input placeholder="1234567890" {...whatsappForm.register('phoneNumberId')} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>WhatsApp Business Account ID</Label>
+                      <Input placeholder="1234567890" {...whatsappForm.register('wabaId')} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Webhook Verify Token</Label>
+                      <Input
+                        placeholder="meu-token-secreto"
+                        {...whatsappForm.register('verifyToken')}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Access Token</Label>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        {...whatsappForm.register('accessToken')}
+                      />
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-lg text-sm space-y-2">
+                    <p className="font-medium">Instruções de configuração:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                      <li>
+                        Crie um app em{' '}
+                        <a
+                          href="https://developers.facebook.com"
+                          target="_blank"
+                          className="underline"
+                        >
+                          developers.facebook.com
+                        </a>
+                      </li>
+                      <li>Habilite o produto WhatsApp Business no seu app</li>
+                      <li>
+                        Configure o webhook URL:{' '}
+                        <code className="bg-muted px-1 rounded">
+                          https://seu-dominio/api/whatsapp/webhook/{'{tenantId}'}
+                        </code>
+                      </li>
+                      <li>Insira o Verify Token definido acima</li>
+                      <li>Insira o App Secret e Access Token gerados</li>
+                    </ol>
                   </div>
                   <Button type="submit" disabled={loading}>
                     {loading ? (

@@ -298,3 +298,29 @@ export class MessageFailedEvent extends BaseDomainEvent {
     });
   }
 }
+
+export class WhatsAppTemplateEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'whatsapp.template',
+      aggregateType: 'WhatsApp',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class WhatsAppSessionUpdateEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'whatsapp.session_update',
+      aggregateType: 'WhatsApp',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
