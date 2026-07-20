@@ -2,7 +2,11 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
 import { EncryptionService } from '../../infrastructure/encryption/encryption.service';
-import { MessageCreatedEvent, MessageSentEvent } from '../../infrastructure/event-bus/domain-events';
+import {
+  MessageCreatedEvent,
+  MessageSentEvent,
+  ConversationCreatedEvent,
+} from '../../infrastructure/event-bus/domain-events';
 
 @Injectable()
 export class ConversationsService {
@@ -149,7 +153,7 @@ export class ConversationsService {
 
   async createConversation(tenantId: string, userId: string, dto: any) {
     const prismaAny = this.prisma as any;
-    return prismaAny.conversation.create({
+    const conversation = await prismaAny.conversation.create({
       data: {
         subject: dto.subject,
         channel: dto.channel || 'CHAT',
@@ -157,6 +161,7 @@ export class ConversationsService {
         priority: dto.priority || 'normal',
         tags: dto.tags || [],
         contactId: dto.contactId,
+        leadId: dto.leadId,
         dealId: dto.dealId,
         companyId: dto.companyId,
         lastMessageAt: new Date(),
@@ -164,6 +169,15 @@ export class ConversationsService {
         userId,
       },
     });
+
+    try {
+      const event = new ConversationCreatedEvent({ ...conversation }, tenantId, userId);
+      await this.eventBus.publish(event);
+    } catch (error: any) {
+      this.logger.warn(`Failed to publish conversation.created event: ${error.message}`);
+    }
+
+    return conversation;
   }
 
   async assignConversation(tenantId: string, id: string, userId: string) {
@@ -330,7 +344,11 @@ export class ConversationsService {
       prismaAny.channel.count({ where: { tenantId, isActive: true } }),
       prismaAny.conversationQueue.count({ where: { tenantId, isActive: true } }),
       prismaAny.user.count({
-        where: { tenantId, status: 'ACTIVE', sessions: { some: { expiresAt: { gt: new Date() } } } },
+        where: {
+          tenantId,
+          status: 'ACTIVE',
+          sessions: { some: { expiresAt: { gt: new Date() } } },
+        },
       }),
     ]);
 

@@ -113,6 +113,7 @@ const navigation: NavGroup[] = [
     items: [
       { label: 'Relatórios', icon: <PieChart className="h-5 w-5" />, href: '/reports' },
       { label: 'Dashboard', icon: <TrendingUp className="h-5 w-5" />, href: '/analytics' },
+      { label: 'Notificações', icon: <Bell className="h-5 w-5" />, href: '/notifications' },
     ],
   },
   {
@@ -124,6 +125,7 @@ const navigation: NavGroup[] = [
       { label: 'Permissões', icon: <Shield className="h-5 w-5" />, href: '/permissions' },
       { label: 'Integrações', icon: <Puzzle className="h-5 w-5" />, href: '/integrations' },
       { label: 'Configurações', icon: <Settings className="h-5 w-5" />, href: '/settings' },
+      { label: 'SLA Engine', icon: <Shield className="h-5 w-5" />, href: '/settings/sla' },
     ],
   },
 ];

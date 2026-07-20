@@ -67,6 +67,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
+import { SlaModule } from './modules/sla/sla.module';
 import { ObservabilityModule } from './infrastructure/observability/observability.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantGuard } from './common/guards/tenant.guard';
@@ -160,6 +161,7 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
     ReportsModule,
     WebhooksModule,
     WhatsAppModule,
+    SlaModule,
   ],
   providers: [
     {

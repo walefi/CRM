@@ -11,6 +11,8 @@ import {
   FileSpreadsheet,
   BookOpen,
   Bell,
+  MessageSquare,
+  User,
   LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,11 +23,13 @@ import { useAuthStore } from '@/stores/auth.store';
 const portalNav = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/portal' },
   { label: 'Tickets', icon: Ticket, href: '/portal/tickets' },
+  { label: 'Conversas', icon: MessageSquare, href: '/portal/conversations' },
   { label: 'Documentos', icon: FileText, href: '/portal/documents' },
   { label: 'Contratos', icon: ScrollText, href: '/portal/contracts' },
   { label: 'Propostas', icon: FileSpreadsheet, href: '/portal/proposals' },
   { label: 'Conhecimento', icon: BookOpen, href: '/portal/knowledge' },
   { label: 'Notificações', icon: Bell, href: '/portal/notifications' },
+  { label: 'Perfil', icon: User, href: '/portal/profile' },
 ];
 
 export function PortalLayout({ children }: { children: React.ReactNode }) {

@@ -5,43 +5,25 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class PortalService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getDashboard(tenantId: string, userId: string) {
-    const prismaAny = this.prisma as any;
-    const [tickets, conversations, documents, contracts, quotes, notifications] = await Promise.all(
-      [
-        prismaAny.ticket?.count({
-          where: { tenantId, status: { in: ['new', 'open', 'in_progress'] } },
-        }) || 0,
-        prismaAny.conversation?.count({
-          where: { tenantId, status: { in: ['active', 'assigned'] } },
-        }) || 0,
-        prismaAny.document?.count({ where: { tenantId, createdBy: userId } }) || 0,
-        prismaAny.contract?.count({ where: { tenantId } }) || 0,
-        prismaAny.quote?.count({ where: { tenantId } }) || 0,
-        this.prisma.notification.count({ where: { userId, isRead: false } }),
-      ],
-    );
-
-    const recentTickets =
-      (await prismaAny.ticket?.findMany({
-        where: { tenantId },
-        take: 5,
-        orderBy: { updatedAt: 'desc' },
-        select: { id: true, subject: true, status: true, priority: true, updatedAt: true },
-      })) || [];
-
-    return {
-      tickets,
-      conversations,
-      documents,
-      contracts,
-      quotes,
-      unreadNotifications: notifications,
-      recentTickets,
-    };
-  }
-
   async getProfile(tenantId: string, userId: string) {
+    const prismaAny = this.prisma as any;
+    const portalUser = await prismaAny.customerPortalUser.findFirst({
+      where: { id: userId, tenantId, deletedAt: null },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        phone: true,
+        status: true,
+        lastLoginAt: true,
+        createdAt: true,
+      },
+    });
+
+    if (portalUser) return portalUser;
+
     return this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -56,12 +38,36 @@ export class PortalService {
     });
   }
 
-  async updateProfile(tenantId: string, userId: string, dto: any) {
+  async updateProfile(
+    tenantId: string,
+    userId: string,
+    dto: { firstName?: string; lastName?: string; phone?: string; title?: string },
+  ) {
+    const prismaAny = this.prisma as any;
     const data: any = {};
     if (dto.firstName) data.firstName = dto.firstName;
     if (dto.lastName) data.lastName = dto.lastName;
     if (dto.phone) data.phone = dto.phone;
-    if (dto.title) data.title = dto.title;
+
+    const portalUser = await prismaAny.customerPortalUser.findFirst({
+      where: { id: userId, tenantId, deletedAt: null },
+    });
+
+    if (portalUser) {
+      return prismaAny.customerPortalUser.update({
+        where: { id: userId },
+        data,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
+          phone: true,
+        },
+      });
+    }
+
     return this.prisma.user.update({
       where: { id: userId },
       data,
@@ -87,11 +93,21 @@ export class PortalService {
         skip,
         take: limit,
         orderBy: { updatedAt: 'desc' },
-        include: { comments: { take: 1, orderBy: { createdAt: 'desc' } } },
+        include: { ticketComment: { take: 1, orderBy: { createdAt: 'desc' } } },
       }) || [],
       prismaAny.ticket?.count({ where }) || 0,
     ]);
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async getPortalDocuments(tenantId: string, page = 1, limit = 20) {
@@ -103,7 +119,17 @@ export class PortalService {
         [],
       prismaAny.document?.count({ where }) || 0,
     ]);
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async getPortalContracts(tenantId: string, page = 1, limit = 20) {
@@ -111,11 +137,26 @@ export class PortalService {
     const where: any = { tenantId };
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      prismaAny.contract?.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }) ||
-        [],
+      prismaAny.contract?.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { customer: { select: { name: true } } },
+      }) || [],
       prismaAny.contract?.count({ where }) || 0,
     ]);
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async getPortalQuotes(tenantId: string, page = 1, limit = 20) {
@@ -123,10 +164,60 @@ export class PortalService {
     const where: any = { tenantId };
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      prismaAny.quote?.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }) || [],
+      prismaAny.quote?.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { customer: { select: { name: true } } },
+      }) || [],
       prismaAny.quote?.count({ where }) || 0,
     ]);
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPreviousPage: page > 1,
+      },
+    };
+  }
+
+  async getPortalConversations(tenantId: string, page = 1, limit = 20) {
+    const prismaAny = this.prisma as any;
+    const skip = (page - 1) * limit;
+    const where = { tenantId };
+    const [data, total] = await Promise.all([
+      prismaAny.conversation?.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { lastMessageAt: 'desc' },
+        select: {
+          id: true,
+          subject: true,
+          status: true,
+          channel: true,
+          lastMessageAt: true,
+          lastMessagePreview: true,
+        },
+      }) || [],
+      prismaAny.conversation?.count({ where }) || 0,
+    ]);
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async getNotifications(tenantId: string, userId: string, page = 1, limit = 20) {
@@ -141,6 +232,30 @@ export class PortalService {
       }),
       this.prisma.notification.count({ where }),
     ]);
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPreviousPage: page > 1,
+      },
+    };
+  }
+
+  async markNotificationRead(tenantId: string, userId: string, notificationId: string) {
+    return this.prisma.notification.updateMany({
+      where: { id: notificationId, userId },
+      data: { isRead: true, readAt: new Date() },
+    });
+  }
+
+  async markAllNotificationsRead(tenantId: string, userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true, readAt: new Date() },
+    });
   }
 }

@@ -11,6 +11,10 @@
 - [x] Etapa 65.1 - Fundação da Arquitetura de Integrações
 - [x] Etapa 65.2 - Email: Envio de Mensagens
 - [x] Etapa 65.3 - Email: Recebimento
+- [x] Etapa 72 - Communication Pipeline Integration
+- [x] Etapa 79 - SLA Engine e Escalonamento Automático
+- [x] Etapa 80 - Inteligência Artificial (AI Assistant & Lead Scoring)
+- [x] Etapa 81 - Customer Portal (Portal do Cliente)
 - [ ] Etapa 65.4 - WhatsApp: Envio e Recebimento
 - [ ] Etapa 65.5 - Consolidação de Modelos
 - [x] Etapa 01 - Fundação do Projeto

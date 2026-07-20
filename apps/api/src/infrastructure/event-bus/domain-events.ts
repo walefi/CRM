@@ -324,3 +324,68 @@ export class WhatsAppSessionUpdateEvent extends BaseDomainEvent {
     });
   }
 }
+
+export class ConversationCreatedEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'conversation.created',
+      aggregateType: 'Conversation',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class SlaWarningEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'sla.warning',
+      aggregateType: 'SLA',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class SlaViolationEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'sla.violation',
+      aggregateType: 'SLA',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class SlaEscalatedEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'sla.escalated',
+      aggregateType: 'SLA',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}
+
+export class SlaResolvedEvent extends BaseDomainEvent {
+  constructor(payload: Record<string, unknown>, tenantId: string, userId?: string) {
+    super({
+      eventName: 'sla.resolved',
+      aggregateType: 'SLA',
+      aggregateId: payload.id as string,
+      payload,
+      tenantId,
+      userId,
+    });
+  }
+}

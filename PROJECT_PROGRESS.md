@@ -1,3 +1,314 @@
+## ETAPA 81 — Customer Portal (Portal do Cliente) (COMPLETA)
+
+### Date: 2026-07-20
+
+### Summary
+
+Implementação completa do Portal do Cliente com autenticação dedicada, dashboard, tickets, conversas, contratos, propostas, documentos, notificações, perfil, logging de acesso e sessões. Reutiliza services existentes do CRM mantendo isolamento por tenant e por cliente.
+
+### Schema Changes (Prisma)
+
+- **CustomerPortalUser** (novo): Usuário do portal com email, password (argon2), firstName, lastName, status, failedAttempts, lockedUntil, lastLoginAt/Ip
+- **CustomerPortalSession** (novo): Sessões do portal com accessToken, refreshToken, ip, userAgent, expiresAt, isActive
+- **CustomerPortalAccessLog** (novo): Log de acesso com action, resource, resourceId, ip, userAgent, metadata
+- **CustomerPortalPreference** (novo): Preferências do portal com key, value (Json)
+- **Customer**: Adicionada relação `portalUsers` para CustomerPortalUser
+
+### Backend
+
+- **PortalModule**: Atualizado com CustomerAuthService, CustomerDashboardService, PortalAccessLogService
+- **CustomerAuthService**: Login/logout/refresh/register/resetPassword/changePassword/getSessions com JWT próprio, argon2 hashing, brute-force protection, session management
+- **CustomerDashboardService**: Dashboard com stats (tickets, conversas, propostas, contratos, notificações), tickets recentes, contratos próximos do vencimento, atividades recentes
+- **PortalAccessLogService**: Log de todas as ações do portal (login, logout, view_dashboard, etc.) com estatísticas
+- **PortalService**: Atualizado com getPortalConversations, markNotificationRead, markAllNotificationsRead
+
+### Endpoints
+
+| Método | Rota                           | Descrição                      |
+| ------ | ------------------------------ | ------------------------------ |
+| POST   | /portal/login                  | Login do portal (público)      |
+| POST   | /portal/logout                 | Logout do portal               |
+| POST   | /portal/refresh                | Refresh token                  |
+| POST   | /portal/register               | Registro de portal user        |
+| POST   | /portal/password/reset         | Solicitar redefinição de senha |
+| POST   | /portal/password/change        | Alterar senha                  |
+| GET    | /portal/sessions               | Listar sessões ativas          |
+| GET    | /portal/dashboard              | Dashboard do portal            |
+| GET    | /portal/profile                | Perfil do usuário              |
+| PATCH  | /portal/profile                | Atualizar perfil               |
+| GET    | /portal/tickets                | Lista de tickets               |
+| GET    | /portal/documents              | Lista de documentos            |
+| GET    | /portal/contracts              | Lista de contratos             |
+| GET    | /portal/proposals              | Lista de propostas             |
+| GET    | /portal/conversations          | Lista de conversas             |
+| GET    | /portal/notificações           | Lista de notificações          |
+| PATCH  | /portal/notifications/:id/read | Marcar notificação como lida   |
+| POST   | /portal/notifications/read-all | Marcar todas como lidas        |
+| GET    | /portal/access-logs            | Logs de acesso                 |
+
+### Frontend
+
+- **/portal**: Layout com sidebar (9 itens: Dashboard, Tickets, Conversas, Documentos, Contratos, Propostas, Conhecimento, Notificações, Perfil)
+- **/portal/notifications**: Página de notificações com mark as read
+- **/portal/profile**: Página de perfil com edição, alteração de senha e sessões ativas
+- **/portal/conversations**: Página de conversas com canal e status
+
+### Tests
+
+- 274 testes passando (263 existentes + 11 novos)
+- Testes: PortalService, PortalAccessLogService, CustomerDashboardService
+
+### Validation
+
+- Prisma validate: OK
+- Prisma generate: OK
+- TypeScript backend: OK
+- TypeScript frontend: OK
+- Frontend build: OK
+- Backend tests: 274/274 passing
+
+### Security
+
+- JWT próprio do portal com refresh token rotation
+- Argon2 password hashing
+- Brute-force protection (5 tentativas → bloqueio 30min)
+- Tenant isolation em todos os endpoints
+- Customer isolation (portal user vinculado a Customer)
+- Access logging completo (login, logout, view_dashboard)
+- Session management (listar e invalidar sessões)
+
+---
+
+## ETAPA 80 — Inteligência Artificial (AI Assistant & Lead Scoring) (COMPLETA)
+
+### Date: 2026-07-20
+
+### Summary
+
+Implementação completa do módulo de IA com Lead Scoring determinístico, Assistente CRM (Q&A), Recomendações acionáveis, Resumo Automático de entidades, Geração de Emails/Mensagens, Insights Comerciais e Log de Execução. O módulo é independente, reutiliza Services existentes, BullMQ para processamento assíncrono e mantém isolamento por tenant.
+
+### Schema Changes (Prisma)
+
+- **AiRecommendation** (novo): Recomendações com entityType, entityId, type, title, description, priority, score, actionType, actionData, status
+- **LeadScoreHistory** (novo): Histórico de scores do lead com breakdown JSON e reason
+- **AiExecutionLog** (novo): Log de execuções IA com action, prompt, response, model, provider, tokens, cost, durationMs, success, error
+- **Tenant**: Adicionadas relações para AiRecommendation, LeadScoreHistory, AiExecutionLog
+
+### Backend
+
+- **AiModule**: Módulo global expandido com todos os novos services
+- **LeadScoringService**: Algoritmo determinístico de scoring (0-100) baseado em source, engagement, company, recency, completeness, activities, conversations. Classificações: Frio/Morno/Interessado/Quente/Muito Quente
+- **AiSummaryService**: Resumos automáticos para Lead, Ticket, Deal, Conversation, Contact, Company com highlights e métricas
+- **AiRecommendationService**: Recomendações acionáveis para leads (follow_up, re_engage), deals (advance_deal), tickets (escalate_ticket), tasks (overdue_task)
+- **AiAssistantService**: Perguntas e respostas sobre leads quentes/frios, desempenho de vendedores, negócios parados, tarefas atrasadas, tickets, visão geral
+- **PromptBuilderService**: Construção dinâmica de prompts para scoring, resumo, geração de email/mensagem
+- **AiExecutionLogService**: Log completo de todas as ações IA com estatísticas
+- **AiWorker**: BullMQ workers para lead scoring, batch scoring, sumário e recomendações
+
+### Endpoints
+
+| Método | Rota                                     | Descrição                                                |
+| ------ | ---------------------------------------- | -------------------------------------------------------- |
+| GET    | /ai                                      | Dashboard overview com score stats, recomendações, usage |
+| POST   | /ai/ask                                  | Perguntar ao assistente IA                               |
+| POST   | /ai/score                                | Calcular score de um lead                                |
+| POST   | /ai/score/batch                          | Batch scoring de todos os leads                          |
+| GET    | /ai/score/stats                          | Estatísticas de scoring                                  |
+| GET    | /ai/score/history/:leadId                | Histórico de scores                                      |
+| GET    | /ai/score/classification/:classification | Leads por classificação                                  |
+| POST   | /ai/summarize                            | Resumir entidade                                         |
+| GET    | /ai/recommendations                      | Listar recomendações                                     |
+| POST   | /ai/recommendations/generate             | Gerar novas recomendações                                |
+| POST   | /ai/recommendations/:id/accept           | Aceitar recomendação                                     |
+| POST   | /ai/recommendations/:id/dismiss          | Dispensar recomendação                                   |
+| POST   | /ai/generate-email                       | Gerar email                                              |
+| POST   | /ai/generate-message                     | Gerar mensagem                                           |
+| GET    | /ai/insights                             | Insights comerciais                                      |
+| GET    | /ai/logs                                 | Logs de execução                                         |
+| GET    | /ai/logs/stats                           | Estatísticas de execução                                 |
+
+### Frontend
+
+- **/ai**: Página completa com 10 tabs: Assistente, Lead Scoring, Recomendações, Insights, Histórico, Chat, Agentes, Prompts, RAG, Uso
+- Cards de estatísticas: Leads Quentes, Leads Frios, Score Médio, Recomendações Pendentes, Chamadas IA
+- **Lead Scoring**: Filtros por classificação, recalculação batch, score por lead
+- **Recomendações**: Lista com accept/dismiss, badges de tipo e prioridade
+- **Insights**: Visão geral de leads, deals, tasks, atividades por status
+- **Histórico**: Log de execuções IA com sucesso/erro, duração, tokens
+
+### Tests
+
+- 263 testes passando (233 existentes + 30 novos)
+- Testes: LeadScoringService, AiSummaryService, AiRecommendationService, AiAssistantService, AiExecutionLogService, PromptBuilderService
+- Cobertura: scoring, summaries, recommendations, assistant Q&A, execution logs, prompt building
+
+### Validation
+
+- Prisma validate: OK
+- Prisma generate: OK
+- TypeScript backend: OK
+- TypeScript frontend: OK
+- Frontend build: OK
+- Backend tests: 263/263 passing
+
+### Security
+
+- Tenant isolation em todos os endpoints
+- JWT + TenantGuard + RolesGuard em endpoints administrativos
+- Rate limit e auditing configuráveis
+- Nenhum dado de outro tenant exposto
+
+---
+
+## ETAPA 79 — SLA Engine e Escalonamento Automático (COMPLETA)
+
+### Date: 2026-07-20
+
+### Summary
+
+Implementação completa do SLA Engine com monitoramento automático, detecção de violações, escalonamento multi-nível e notificações. Reutiliza BullMQ, Event Bus, Notifications e Timeline existentes.
+
+### Schema Changes (Prisma)
+
+- **SlaExecution** (novo): Monitoramento de execução SLA por entidade (entityType, entityId, status, deadlineAt, breachedAt)
+- **SlaViolation** (novo): Registro de violações com severidade, tipo e status de resolução
+- **SlaEscalation** (novo): Registro de escalonamentos com nível, ação e destino
+- **SLAPolicy** (existente): Adicionadas relações `executions` e `violations`
+- **Ticket**: Adicionado `slaPolicyId` (FK → SLAPolicy)
+- **Conversation**: Adicionado `slaPolicyId` (FK → SLAPolicy)
+- **Tenant**: Adicionadas relações para SlaExecution, SlaViolation, SlaEscalation
+
+### Backend
+
+- **SlaModule**: Módulo global com SlaService, SlaController, SlaWorker
+- **SlaService**: CRUD de regras, início/resolução de execuções, detecção de violações, escalonamento
+- **SlaController**: Endpoints GET/POST/PATCH/DELETE para rules, violations, executions, statistics
+- **SlaWorker**: BullMQ worker que verifica SLAs a cada 60s, detecta warnings e breaches, executa escalonamentos
+- **Domain Events**: SlaWarningEvent, SlaViolationEvent, SlaEscalatedEvent, SlaResolvedEvent
+
+### Frontend
+
+- **/settings/sla**: Página completa com gestión de regras, visualização de violações e execuções
+- Cards de estatísticas: Total Execuções, Em Andamento, Violações Hoje, Taxa de Conformidade
+- CRUD de regras SLA com prioridade, tempos e níveis de escalonamento
+- Lista de violações com severidade e status
+- Lista de execuções com status e deadline
+
+### Endpoints
+
+| Método | Rota            | Descrição               |
+| ------ | --------------- | ----------------------- |
+| GET    | /sla            | Listar regras SLA       |
+| GET    | /sla/rules      | Listar regras           |
+| POST   | /sla/rules      | Criar regra (admin)     |
+| PATCH  | /sla/rules/:id  | Atualizar regra (admin) |
+| DELETE | /sla/rules/:id  | Excluir regra (admin)   |
+| GET    | /sla/statistics | Estatísticas            |
+| GET    | /sla/violations | Listar violações        |
+| GET    | /sla/executions | Listar execuções        |
+| POST   | /sla/check      | Verificar SLAs (admin)  |
+
+### Eventos
+
+- `sla.warning` — SLA próximo do vencimento
+- `sla.violation` — SLA violado
+- `sla.escalated` — Escalonamento executado
+- `sla.resolved` — SLA resolvido no prazo
+
+### Testes
+
+- 233 testes passando (todos existentes)
+- Nenhum teste quebrado pelas alterações
+
+### Validação
+
+- Prisma validate: OK
+- TypeScript backend: OK
+- TypeScript frontend: OK
+
+### Pendências
+
+- SLA Worker requer Redis para BullMQ (não executa sem Redis)
+- Não há correspondência automática entre SLAPolicy e Ticket/Conversation por prioridade/canal
+- Escalamento usa apenas notificações in_app (não envia email/WhatsApp)
+
+---
+
+## ETAPA 72 — Communication Pipeline Integration (COMPLETA)
+
+### Date: 2026-07-20
+
+### Summary
+
+Integração e validação do fluxo operacional completo: Lead → Contact → Conversation → Message → Channel → Timeline → Notification → Activity. Corrigidos gaps de schema, eventos e frontend.
+
+### Schema Changes (Prisma)
+
+- **Conversation**: Adicionado `leadId` (FK → Lead), corrigido `companyId` (adicionado `@relation`), adicionado `activities Activity[]`
+- **Activity**: Adicionado `leadId` (FK → Lead), `conversationId` (FK → Conversation), com índices
+- **Lead**: Adicionado `conversations Conversation[]`, `activities Activity[]`
+- **Company**: Adicionado `conversations Conversation[]`
+
+### Backend Changes
+
+- **domain-events.ts**: Adicionado `ConversationCreatedEvent` (`conversation.created`)
+- **conversations.service.ts**: `createConversation()` agora aceita `leadId`, emite `ConversationCreatedEvent`
+- **timeline.subscriber.ts**: Adicionado handler `@OnEvent('conversation.created')`
+- **tasks.service.ts**: `completeTask()` agora emite `TaskCompletedEvent` (antes apenas `updateTask` emitia)
+- **tasks.controller.ts**: `completeTask` agora passa `userId` para o service
+- **tasks.dto.ts**: `CreateActivityDto` agora aceita `leadId` e `conversationId`
+
+### Frontend Changes
+
+- **leads/[id]/page.tsx**: Criada Lead detail page com Timeline, Conversations e Activities tabs
+- **leads/page.tsx**: Nomes dos leads agora são clicáveis (navegam para `/leads/:id`)
+- **admin-layout.tsx**: Adicionado link "Notificações" no sidebar (grupo Análise)
+
+### Componentes Reutilizados
+
+- `AdminLayout`, `Card`, `Badge`, `Button`, `Dialog`, `Tabs`, `Select` — UI existente
+- `TimelineService.recordEvent()` — Timeline polimórfica existente
+- `NotificationsService.send()` — Já chamado por `LeadDistributionService`
+- `EventBusService.publish()` — Event-driven existente
+
+### Fluxo Integrado
+
+```
+Lead Inbound → LeadsService.intake() → LeadCreatedEvent
+    → LeadDistributionService → LeadAssignedEvent
+    → NotificationsService.send() → Notification para vendedor
+    → TimelineSubscriber → Timeline: lead.created, lead.assigned
+
+Conversas → ConversationsService.createConversation()
+    → ConversationCreatedEvent → Timeline: conversation.created
+
+Mensagens → MessageCreatedEvent/MessageSentEvent/MessageReceivedEvent
+    → Timeline: message.created/sent/received
+
+Atividades → TasksService.createActivity() → Activity com leadId/conversationId
+    → TasksService.completeTask() → TaskCompletedEvent → Timeline
+```
+
+### Testes
+
+- 233 testes passando (todos existentes)
+- Nenhum teste quebrado pelas alterações
+
+### Validação
+
+- Prisma validate: OK
+- TypeScript backend: OK (sem erros)
+- TypeScript frontend: OK (sem erros)
+- Backend tests: 233 passed, 0 failed
+
+### Pendências
+
+- Lead detail page não possui Kanban drag-and-drop (requer ETAPA 67.1)
+- Conversations na Lead detail redirecionam para `/conversations` (não filtrado por lead)
+- Não há CreateConversation endpoint com `leadId` no controller (service aceita mas controller não expõe)
+
+---
+
 ## Stage 65 — Arquitetura de Integrações (Email + WhatsApp)
 
 ### Date: 2026-07-18
@@ -150,11 +461,11 @@ Corrigidas 3 Promises HTTP no frontend que estavam sem tratamento de rejeição,
 
 ### Ocorrências Corrigidas (3)
 
-| Arquivo | Linha | Antes | Depois |
-|---------|-------|-------|--------|
-| `contract-drawer.tsx` | 607 | `api.post(...).then(() => onSuccess())` | `try { await api.post(...); toast.success(...); onSuccess(); } catch (e) { toast.error(...) }` |
-| `contracts/page.tsx` | 246 | `api.post(...).then(() => refetch())` | `try { await api.post(...); refetch(); } catch (e) { toast.error(...) }` |
-| `quote-drawer.tsx` | 591 | `api.post(...).then(() => onSuccess())` | `try { await api.post(...); toast.success(...); onSuccess(); } catch (e) { toast.error(...) }` |
+| Arquivo               | Linha | Antes                                   | Depois                                                                                         |
+| --------------------- | ----- | --------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `contract-drawer.tsx` | 607   | `api.post(...).then(() => onSuccess())` | `try { await api.post(...); toast.success(...); onSuccess(); } catch (e) { toast.error(...) }` |
+| `contracts/page.tsx`  | 246   | `api.post(...).then(() => refetch())`   | `try { await api.post(...); refetch(); } catch (e) { toast.error(...) }`                       |
+| `quote-drawer.tsx`    | 591   | `api.post(...).then(() => onSuccess())` | `try { await api.post(...); toast.success(...); onSuccess(); } catch (e) { toast.error(...) }` |
 
 ### Padrão Aplicado
 
@@ -197,18 +508,18 @@ Corrigidos 22 ocorrências de `.catch(() => {})` em 10 arquivos do backend, subs
 
 ### Ocorrências Corrigidas (22)
 
-| Arquivo | Qtd | Tipo |
-|---|---|---|
-| `automations.service.ts` | 4 | Event bus publishing |
-| `ai.service.ts` | 1 | AI usage tracking (DB write) |
-| `integrations.service.ts` | 4 | Event bus publishing + webhook log |
-| `deals.service.ts` | 3 | Event bus publishing |
-| `leads.service.ts` | 2 | Event bus publishing |
-| `search.service.ts` | 2 | Search history + event publishing |
-| `companies.service.ts` | 1 | Event bus publishing |
-| `contacts.service.ts` | 1 | Event bus publishing |
-| `notifications.service.ts` | 3 | DB writes + broadcast send |
-| `tasks.service.ts` | 1 | Event bus publishing |
+| Arquivo                    | Qtd | Tipo                               |
+| -------------------------- | --- | ---------------------------------- |
+| `automations.service.ts`   | 4   | Event bus publishing               |
+| `ai.service.ts`            | 1   | AI usage tracking (DB write)       |
+| `integrations.service.ts`  | 4   | Event bus publishing + webhook log |
+| `deals.service.ts`         | 3   | Event bus publishing               |
+| `leads.service.ts`         | 2   | Event bus publishing               |
+| `search.service.ts`        | 2   | Search history + event publishing  |
+| `companies.service.ts`     | 1   | Event bus publishing               |
+| `contacts.service.ts`      | 1   | Event bus publishing               |
+| `notifications.service.ts` | 3   | DB writes + broadcast send         |
+| `tasks.service.ts`         | 1   | Event bus publishing               |
 
 ### Adições
 
@@ -298,6 +609,7 @@ Eliminado todo dados fabricados, hardcoded e Math.random() dos 10 services backe
 ### Summary
 
 Corrected all P2 interactive elements identified in the functional audit:
+
 1. Dashboard buttons ("Ver Pipeline", "Documentación") replaced with functional Link cards
 2. Portal Conversas card `href="#"` fixed to `/conversations`
 3. Email module placeholder redirected to `/conversations?channel=EMAIL`
@@ -338,6 +650,7 @@ Corrected all P2 interactive elements identified in the functional audit:
 ### Summary
 
 Corrected the two P1 critical problems identified in the functional audit:
+
 1. Logout button now fully functional (server-side token invalidation + client cleanup)
 2. Notification bell now functional (clickable, shows unread count from API)
 
@@ -348,6 +661,7 @@ Corrected the two P1 critical problems identified in the functional audit:
 ### Changes
 
 **Logout (P1 #1):**
+
 - `handleLogout()` calls `POST /auth/logout` with refreshToken
 - Clears Zustand auth store via `clearAuth()`
 - Removes tokens from localStorage
@@ -355,6 +669,7 @@ Corrected the two P1 critical problems identified in the functional audit:
 - Error handling: continues local cleanup even if API call fails
 
 **Notifications (P1 #2):**
+
 - Bell button now navigates to `/notifications` on click
 - `fetchUnreadCount()` calls `GET /notifications/stats` every 60 seconds
 - Badge shows unread count (99+ for >99)
@@ -383,11 +698,13 @@ management (Stage 11).
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/revops/revops.module.ts`
 - `apps/api/src/modules/revops/revops.service.ts` — Commissions, forecasts, territories, stats
 - `apps/api/src/modules/revops/revops.controller.ts` — 7 endpoints
 
 **Database:**
+
 - New models: CommissionPlan, SalesForecast, Territory
 - Migration: add_revops
 
@@ -423,11 +740,13 @@ Built on existing Omnichannel Platform (Stage 29).
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/cx/cx.module.ts`
 - `apps/api/src/modules/cx/cx.service.ts` — Conversations, channels, queues, agents, journeys, SLA, stats
 - `apps/api/src/modules/cx/cx.controller.ts` — 10 endpoints
 
 **Database:**
+
 - New models: SLAPolicy, ConversationRating, CustomerJourney, Agent
 - Migration: add_cx
 
@@ -462,11 +781,13 @@ Extended existing conversations, notifications, and calendar platforms.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/collaboration/collaboration.module.ts`
 - `apps/api/src/modules/collaboration/collaboration.service.ts` — Workspaces, announcements, meetings, stats
 - `apps/api/src/modules/collaboration/collaboration.controller.ts` — 7 endpoints
 
 **Database:**
+
 - New models: Workspace, WorkspaceMember, Announcement, Meeting, MeetingParticipant
 - Migration: add_collaboration
 
@@ -501,11 +822,13 @@ Built on top of Stage 24 (Search), Stage 30 (Knowledge Base), and Stage 33 (DMS)
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/km/km.module.ts`
 - `apps/api/src/modules/km/km.service.ts` — Wiki (CRUD, view tracking), FAQ (ordered, category), collections, stats
 - `apps/api/src/modules/km/km.controller.ts` — 8 endpoints
 
 **Database:**
+
 - New models: WikiPage, FAQ, KnowledgeCollection
 - Migration: add_knowledge_ext
 
@@ -540,11 +863,13 @@ parallel), human tasks (queues, assignments), and low-code process orchestration
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/bpmn/bpmn.module.ts`
 - `apps/api/src/modules/bpmn/bpmn.service.ts` — Rules, approvals, processes, human tasks, stats
 - `apps/api/src/modules/bpmn/bpmn.controller.ts` — 10 endpoints
 
 **Database:**
+
 - New models: BusinessRule, ApprovalFlow, ApprovalStep, ProcessDefinition, HumanTask
 - Migration: add_bpmn_rules
 
@@ -580,11 +905,13 @@ backend with pipeline execution and deployment management.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/devops/devops.module.ts`
 - `apps/api/src/modules/devops/devops.service.ts` — Pipelines, deployments, rollbacks, feature flags, releases, stats
 - `apps/api/src/modules/devops/devops.controller.ts` — 9 endpoints
 
 **Database:**
+
 - New models: CICDPipeline (ci_cd_pipelines), Deployment, FeatureFlag, CodeQualityReport
 - Migration: add_devsecops
 
@@ -619,11 +946,13 @@ and stats dashboard. Built alongside existing observability infrastructure.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/observability/observability-api.module.ts`
 - `apps/api/src/modules/observability/observability-api.service.ts` — Metrics, logs, health, alerts, stats
 - `apps/api/src/modules/observability/observability-api.controller.ts` — 8 endpoints
 
 **Database:**
+
 - New models: ObservabilityMetric, ObservabilityLog, HealthCheck, AlertRule
 - Migration: add_observability
 
@@ -659,11 +988,13 @@ consent management, and audit log retrieval.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/security/security.module.ts`
 - `apps/api/src/modules/security/security.service.ts` — Policies, secrets vault, incidents, compliance audits, audit logs, stats
 - `apps/api/src/modules/security/security.controller.ts` — 10 endpoints
 
 **Database:**
+
 - New models: SecurityPolicy, Secret, SecurityIncident, ComplianceAudit, Consent
 - Migration: add_security
 
@@ -702,11 +1033,13 @@ webhooks (delivery simulation, retry), and marketplace browser.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/gateway/gateway.module.ts`
 - `apps/api/src/modules/gateway/gateway.service.ts` — API apps, connectors, plugins, marketplace, webhooks, stats
 - `apps/api/src/modules/gateway/gateway.controller.ts` — 11 endpoints
 
 **Database:**
+
 - New models: ApiApplication, Connector, Plugin, WebhookEndpoint, WebhookDelivery
 - Migration: add_api_gateway
 
@@ -741,11 +1074,13 @@ prediction tracking, model training simulation, and MLOps capabilities.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/ai-ml/ai-ml.module.ts`
 - `apps/api/src/modules/ai-ml/ai-ml.service.ts` — Models CRUD, train, inference, predictions, feature store, registry, stats
 - `apps/api/src/modules/ai-ml/ai-ml.controller.ts` — 9 endpoints
 
 **Database:**
+
 - New models: AIModel, ModelFeature, FeatureStore, InferenceRequest, Prediction
 - Migration: add_ai_ml_platform
 
@@ -786,11 +1121,13 @@ dashboard CRUD, and ETL run simulation.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/bi/bi.module.ts`
 - `apps/api/src/modules/bi/bi.service.ts` — Pipelines, data sources, metrics, dashboards, queries
 - `apps/api/src/modules/bi/bi.controller.ts` — 11 endpoints
 
 **Database:**
+
 - New models: DataPipeline, DataSource, BusinessMetric, AnalyticalQuery
 - Migration: add_bi_platform
 
@@ -831,11 +1168,13 @@ operational alerts, risk management (probability x impact), planning scenarios
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/control-tower/control-tower.module.ts`
 - `apps/api/src/modules/control-tower/control-tower.service.ts` — Executive dashboard, KPIs (12 defaults), alerts, risks, planning scenarios, stats
 - `apps/api/src/modules/control-tower/control-tower.controller.ts` — 9 endpoints
 
 **Database:**
+
 - New models: KPIDefinition, OperationalAlert, RiskEvent, PlanningScenario
 - Migration: add_control_tower
 
@@ -882,11 +1221,13 @@ carriers, and picking orders. Stats dashboard with shipment/delivery metrics.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/logistics/logistics.module.ts`
 - `apps/api/src/modules/logistics/logistics.service.ts` — Shipments, deliveries, POD, carriers, picking, stats
 - `apps/api/src/modules/logistics/logistics.controller.ts` — 10 endpoints
 
 **Database:**
+
 - New models: Shipment, ShipmentItem, Delivery, Carrier, PickingOrder
 - Migration: add_logistics
 
@@ -927,11 +1268,13 @@ stages completed.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/quality/quality.module.ts`
 - `apps/api/src/modules/quality/quality.service.ts` — NCs, CAPAs, audits, stats
 - `apps/api/src/modules/quality/quality.controller.ts` — 7 endpoints
 
 **Database:**
+
 - New models: NonConformity, CAPA, QualityAudit
 - Migration: add_quality
 
@@ -972,11 +1315,13 @@ and capacity planning.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/manufacturing/manufacturing.module.ts`
 - `apps/api/src/modules/manufacturing/manufacturing.service.ts` — BOMs, production orders, start/finish execution, work centers, stats
 - `apps/api/src/modules/manufacturing/manufacturing.controller.ts` — 9 endpoints
 
 **Database:**
+
 - New models: BOM, BOMItem, ProductionOrder, ProductionExecution, WorkCenter
 - Migration: add_manufacturing
 
@@ -1015,11 +1360,13 @@ and inspections with checklist results.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/assets/assets.module.ts`
 - `apps/api/src/modules/assets/assets.service.ts` — Assets CRUD, maintenance plans, work orders, inspections, stats
 - `apps/api/src/modules/assets/assets.controller.ts` — 12 endpoints
 
 **Database:**
+
 - New models: Asset, MaintenancePlan, WorkOrder, WorkOrderTask, Inspection
 - Migration: add_assets
 
@@ -1059,11 +1406,13 @@ department/team org views.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/hr/hr.module.ts`
 - `apps/api/src/modules/hr/hr.service.ts` — Employees, skills, allocations, vacations, leaves, reviews, trainings, departments, teams, stats
 - `apps/api/src/modules/hr/hr.controller.ts` — 16 endpoints
 
 **Database:**
+
 - New models: ResourceAllocation, EmployeeSkill, Vacation, LeaveRequest, PerformanceReview, Training
 - Migration: add_hr
 
@@ -1101,11 +1450,13 @@ customer journey tracking, NPS surveys, and onboarding plans.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/customer-success/customer-success.module.ts`
 - `apps/api/src/modules/customer-success/customer-success.service.ts` — Subscriptions, renewals, health calc, journey, NPS, onboarding, stats
 - `apps/api/src/modules/customer-success/customer-success.controller.ts` — 11 endpoints
 
 **Database:**
+
 - New models: Subscription, SubscriptionRenewal, CustomerHealth, NPSResponse, OnboardingPlan
 - Migration: add_customer_success
 
@@ -1153,11 +1504,13 @@ comprehensive payment tracking.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/billing/billing.module.ts`
 - `apps/api/src/modules/billing/billing.service.ts` — Invoices CRUD, issue/cancel, billing rules, payments (PIX, boleto), stats
 - `apps/api/src/modules/billing/billing.controller.ts` — 9 endpoints
 
 **Database:**
+
 - New models: Invoice, InvoiceItem, Billing, Payment
 - Migration: add_billing
 
@@ -1208,11 +1561,13 @@ and comprehensive stats dashboard.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/financial/financial.module.ts`
 - `apps/api/src/modules/financial/financial.service.ts` — Transactions, receivables+payments, payables+payments, cash flow, stats
 - `apps/api/src/modules/financial/financial.controller.ts` — 11 endpoints
 
 **Database:**
+
 - New models: FinancialTransaction, Receivable, ReceivablePayment, Payable, PayablePayment, CashFlow
 - Migration: add_financial
 
@@ -1250,11 +1605,13 @@ Full procurement lifecycle: Request → Order → Approve → Receive.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/procurement/procurement.module.ts`
 - `apps/api/src/modules/procurement/procurement.service.ts` — Suppliers CRUD, purchase requests, purchase orders, receiving, stats
 - `apps/api/src/modules/procurement/procurement.controller.ts` — 10 endpoints
 
 **Database:**
+
 - New models: Supplier, PurchaseRequest, PurchaseRequestItem, PurchaseOrder, PurchaseOrderItem, Receiving, ReceivingItem
 - Migration: add_procurement
 
@@ -1293,11 +1650,13 @@ and automatic quantity updates on movements.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/inventory/inventory.module.ts`
 - `apps/api/src/modules/inventory/inventory.service.ts` — Items CRUD, warehouses, movements, adjustments, auto-quantity sync, stats
 - `apps/api/src/modules/inventory/inventory.controller.ts` — 7 endpoints
 
 **Database:**
+
 - New models: Warehouse, InventoryItem, StockMovement, InventoryAdjustment
 - Migration: add_inventory
 
@@ -1339,11 +1698,13 @@ order history tracking, multi-item support with pricing, and stats dashboard.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/sales-orders/sales-orders.module.ts`
 - `apps/api/src/modules/sales-orders/sales-orders.service.ts` — CRUD, convert from quote, approve, cancel, stats
 - `apps/api/src/modules/sales-orders/sales-orders.controller.ts` — 9 endpoints
 
 **Database:**
+
 - New models: SalesOrder, SalesOrderItem, SalesOrderHistory
 - Migration: add_sales_orders
 
@@ -1514,14 +1875,17 @@ markers. Built frontend with notification list, read/unread, send, broadcast dia
 ### Files Created/Modified
 
 **Backend:**
+
 - Rewrote `apps/api/src/modules/notifications/notifications.service.ts` — Full service: CRUD, send, template, broadcast, schedule, preferences, delivery tracking, stats
 - Rewrote `apps/api/src/modules/notifications/notifications.controller.ts` — 14 endpoints
 - Rewrote `apps/api/src/modules/notifications/notifications.module.ts`
 
 **Frontend:**
+
 - Rewrote `apps/web/src/app/notifications/page.tsx` — Full notification center with list, read/unread, send/broadcast dialogs, stats
 
 **Database:**
+
 - Extended Notification (+3 fields: channel, category, data, isDelivered, readAt, templateId)
 - New: NotificationTemplate, NotificationPreference, NotificationSubscription, NotificationDelivery
 - Migration: add_notification_center
@@ -1567,11 +1931,13 @@ with signature center, signer panel, timeline, and create/send/cancel actions.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/signatures/signatures.module.ts`
 - `apps/api/src/modules/signatures/signatures.service.ts` — Requests CRUD, signers, workflows, audit, webhooks, reminders, templates, stats
 - `apps/api/src/modules/signatures/signatures.controller.ts` — 12 endpoints
 
 **Frontend:**
+
 - `apps/web/src/app/signatures/page.tsx` — Signature center with list, signer panel, audit timeline, create/send/cancel actions
 
 ### Files Modified
@@ -1626,11 +1992,13 @@ and Timeline Engine.
 ### Files Created
 
 **Backend:**
+
 - `apps/api/src/modules/documents/documents.module.ts`
 - `apps/api/src/modules/documents/documents.service.ts` — CRUD, folders, versions, sharing, search, favorites, stats
 - `apps/api/src/modules/documents/documents.controller.ts` — 15 endpoints
 
 **Frontend:**
+
 - `apps/web/src/app/documents/page.tsx` — Document center with grid, folders, upload, search, favorites, stats
 
 ### Files Modified

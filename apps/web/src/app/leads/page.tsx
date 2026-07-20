@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EntityTable } from '@/components/entity/entity-table';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ const statusColors: Record<string, string> = {
 
 export default function LeadsPage() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editLead, setEditLead] = useState<any>(null);
   const stats = useQuery({
@@ -113,9 +115,15 @@ export default function LeadsPage() {
               header: 'Nome',
               sortable: true,
               render: (l: any) => (
-                <span className="font-medium">
+                <button
+                  className="font-medium text-primary hover:underline text-left"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/leads/${l.id}`);
+                  }}
+                >
                   {l.firstName} {l.lastName}
-                </span>
+                </button>
               ),
             },
             { key: 'email', header: 'Email' },
@@ -134,7 +142,9 @@ export default function LeadsPage() {
               header: 'Responsável',
               render: (l: any) =>
                 l.owner ? (
-                  <span className="text-sm">{l.owner.firstName} {l.owner.lastName}</span>
+                  <span className="text-sm">
+                    {l.owner.firstName} {l.owner.lastName}
+                  </span>
                 ) : (
                   <span className="text-sm text-muted-foreground italic">Não atribuído</span>
                 ),

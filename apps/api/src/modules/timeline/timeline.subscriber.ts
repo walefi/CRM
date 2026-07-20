@@ -129,6 +129,10 @@ export class TimelineSubscriber {
   async onWhatsAppSessionUpdate(e: IDomainEvent) {
     await this.record(e, 'whatsapp', 'session_update');
   }
+  @OnEvent('conversation.created')
+  async onConversationCreated(e: IDomainEvent) {
+    await this.record(e, 'conversation', 'created');
+  }
 
   private async record(event: IDomainEvent, entity: string, action: string) {
     try {

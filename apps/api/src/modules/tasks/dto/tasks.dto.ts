@@ -27,6 +27,14 @@ export class CreateActivityDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  leadId?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   dealId?: string;
   @ApiPropertyOptional()
   @IsOptional()

@@ -82,8 +82,12 @@ export class TasksController {
 
   @Post('tasks/:id/complete')
   @ApiOperation({ summary: 'Complete task' })
-  completeTask(@Param('id') id: string, @CurrentUser('tenantId') tenantId: string) {
-    return this.tasksService.completeTask(id, tenantId);
+  completeTask(
+    @Param('id') id: string,
+    @CurrentUser('tenantId') tenantId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.tasksService.completeTask(id, tenantId, userId);
   }
 
   @Get('activities')
@@ -112,7 +116,11 @@ export class TasksController {
   @Post('projects')
   @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Create project' })
-  createProject(@CurrentUser('tenantId') tenantId: string, @CurrentUser('id') userId: string, @Body() dto: any) {
+  createProject(
+    @CurrentUser('tenantId') tenantId: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: any,
+  ) {
     return this.tasksService.createProject(tenantId, userId, dto);
   }
 
@@ -125,7 +133,11 @@ export class TasksController {
   @Patch('projects/:id')
   @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Update project' })
-  updateProject(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string, @Body() dto: any) {
+  updateProject(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: any,
+  ) {
     return this.tasksService.updateProject(tenantId, id, dto);
   }
 

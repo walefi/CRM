@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { createHmac } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../infrastructure/event-bus/event-bus.service';
 import { QueueService } from '../../infrastructure/queue/queue.service';
@@ -24,6 +25,18 @@ export interface WhatsAppJobData {
   phoneNumberId: string;
   to: string;
   text: string;
+  mediaUrl?: string;
+  mediaType?: string;
+}
+
+export interface WhatsAppMediaJobData {
+  messageId: string;
+  tenantId: string;
+  phoneNumberId: string;
+  to: string;
+  mediaUrl: string;
+  mediaType: string;
+  caption?: string;
 }
 
 @Injectable()
@@ -316,14 +329,12 @@ export class WhatsAppService {
       throw new BadRequestException('Phone Number ID is required');
     }
 
-    // Resolve conversation
     let conversationId = dto.conversationId;
     if (!conversationId) {
       const conversation = await this.findOrCreateConversation(tenantId, phoneNumberId);
       conversationId = conversation.id;
     }
 
-    // Create message record
     const message = await (this.prisma as any).message.create({
       data: {
         content: dto.text,
@@ -353,7 +364,6 @@ export class WhatsAppService {
       this.logger.warn(`Failed to publish message.created event: ${e.message}`);
     }
 
-    // Queue for async send
     await this.queueService.addJob(
       WhatsAppService.QUEUE_NAME,
       'send-whatsapp',
@@ -378,6 +388,291 @@ export class WhatsAppService {
       conversationId,
       status: 'queued',
     };
+  }
+
+  // ── Send Media Message ─────────────────────────────────────────────
+
+  async sendMediaMessage(
+    tenantId: string,
+    userId: string,
+    dto: {
+      to: string;
+      mediaUrl: string;
+      mediaType: 'image' | 'video' | 'audio' | 'document';
+      caption?: string;
+      phoneNumberId?: string;
+      conversationId?: string;
+    },
+  ) {
+    const config = await this.getConfig(tenantId);
+    if (!config || !config.isConnected) {
+      throw new BadRequestException('WhatsApp channel not configured or disconnected');
+    }
+
+    const phoneNumberId = dto.phoneNumberId || config.phoneNumberId;
+    if (!phoneNumberId) {
+      throw new BadRequestException('Phone Number ID is required');
+    }
+
+    let conversationId = dto.conversationId;
+    if (!conversationId) {
+      const conversation = await this.findOrCreateConversation(tenantId, phoneNumberId);
+      conversationId = conversation.id;
+    }
+
+    const message = await (this.prisma as any).message.create({
+      data: {
+        content: dto.caption || `[${dto.mediaType}]`,
+        direction: 'OUTBOUND',
+        channel: 'WHATSAPP',
+        messageType: dto.mediaType,
+        conversationId,
+        senderId: userId,
+        status: 'pending',
+        metadata: JSON.stringify({
+          to: dto.to,
+          phoneNumberId,
+          mediaUrl: dto.mediaUrl,
+          mediaType: dto.mediaType,
+        }),
+        tenantId,
+      },
+    });
+
+    try {
+      await this.eventBus.publish(
+        new MessageCreatedEvent(
+          { ...message, conversationId, direction: 'OUTBOUND' },
+          tenantId,
+          userId,
+        ),
+      );
+    } catch (e: any) {
+      this.logger.warn(`Failed to publish message.created event: ${e.message}`);
+    }
+
+    await this.queueService.addJob(
+      WhatsAppService.QUEUE_NAME,
+      'send-whatsapp-media',
+      {
+        messageId: message.id,
+        tenantId,
+        phoneNumberId,
+        to: dto.to,
+        mediaUrl: dto.mediaUrl,
+        mediaType: dto.mediaType,
+        caption: dto.caption,
+      } as WhatsAppMediaJobData,
+      {
+        jobId: `whatsapp-media-${message.id}`,
+        attempts: 3,
+        priority: 1,
+      },
+    );
+
+    this.logger.log(`WhatsApp media message queued: messageId=${message.id} type=${dto.mediaType}`);
+
+    return {
+      messageId: message.id,
+      conversationId,
+      status: 'queued',
+    };
+  }
+
+  // ── Process Media Send (BullMQ Worker) ────────────────────────────
+
+  async processMediaSendJob(jobData: WhatsAppMediaJobData): Promise<void> {
+    const { messageId, tenantId, phoneNumberId, to, mediaUrl, mediaType, caption } = jobData;
+
+    const message = await (this.prisma as any).message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      this.logger.error(`Message not found: ${messageId}`);
+      return;
+    }
+
+    if (message.status !== 'pending') {
+      this.logger.debug(`Message ${messageId} already processed (status=${message.status})`);
+      return;
+    }
+
+    const credentials = await this.getDecryptedCredentials(tenantId);
+    const accessToken = credentials?.accessToken as string;
+
+    if (!accessToken) {
+      await this.markMessageFailed(messageId, tenantId, 'Access token not configured');
+      return;
+    }
+
+    try {
+      // Step 1: Upload media to get media_id
+      const uploadResponse = await fetch(
+        `${WhatsAppService.META_API_BASE}/${WhatsAppService.META_API_VERSION}/${phoneNumberId}/media`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            type: mediaType,
+            url: mediaUrl,
+          }),
+        },
+      );
+
+      const uploadResult = (await uploadResponse.json()) as any;
+
+      if (!uploadResponse.ok) {
+        const errorMessage = uploadResult.error?.message || 'Media upload failed';
+        await this.markMessageFailed(messageId, tenantId, errorMessage);
+        return;
+      }
+
+      const mediaId = uploadResult.id;
+
+      // Step 2: Send message with media_id
+      const mediaPayload: any = {
+        messaging_product: 'whatsapp',
+        to,
+        type: mediaType,
+        [mediaType]: { id: mediaId },
+      };
+
+      if (caption && (mediaType === 'image' || mediaType === 'video' || mediaType === 'document')) {
+        mediaPayload[mediaType].caption = caption;
+      }
+
+      const sendResponse = await fetch(
+        `${WhatsAppService.META_API_BASE}/${WhatsAppService.META_API_VERSION}/${phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(mediaPayload),
+        },
+      );
+
+      const sendResult = (await sendResponse.json()) as any;
+
+      if (!sendResponse.ok) {
+        const errorMessage = sendResult.error?.message || 'Media message send failed';
+        await this.markMessageFailed(messageId, tenantId, errorMessage);
+        return;
+      }
+
+      const metaMessages = sendResult.messages as any[];
+      const externalId = metaMessages?.[0]?.id;
+
+      await (this.prisma as any).message.update({
+        where: { id: messageId },
+        data: {
+          status: 'sent',
+          externalId: externalId || undefined,
+        },
+      });
+
+      // Create delivery record
+      const prismaAny = this.prisma as any;
+      await prismaAny.whatsAppDelivery.create({
+        data: {
+          messageId,
+          status: 'sent',
+          tenantId,
+        },
+      });
+
+      try {
+        await this.eventBus.publish(
+          new MessageSentEvent(
+            { ...message, conversationId: message.conversationId, direction: 'OUTBOUND' },
+            tenantId,
+          ),
+        );
+      } catch (e: any) {
+        this.logger.warn(`Failed to publish message.sent event: ${e.message}`);
+      }
+
+      this.logger.log(`WhatsApp media sent: messageId=${messageId} type=${mediaType}`);
+    } catch (error: any) {
+      this.logger.error(`Failed to send WhatsApp media: ${error.message}`);
+      await this.markMessageFailed(messageId, tenantId, error.message);
+    }
+  }
+
+  // ── Webhook Signature Verification ─────────────────────────────────
+
+  verifyWebhookSignature(body: string, signature: string | undefined, appSecret: string): boolean {
+    if (!signature) return false;
+
+    try {
+      const signatureHash = signature.replace('sha256=', '');
+      const expectedHash = createHmac('sha256', appSecret).update(body, 'utf8').digest('hex');
+
+      return signatureHash === expectedHash;
+    } catch {
+      return false;
+    }
+  }
+
+  // ── Delivery Tracking ──────────────────────────────────────────────
+
+  async updateDeliveryStatus(tenantId: string, messageId: string, status: string, error?: string) {
+    const prismaAny = this.prisma as any;
+
+    const existing = await prismaAny.whatsAppDelivery.findUnique({
+      where: { messageId_tenantId: { messageId, tenantId } },
+    });
+    if (existing) {
+      const updateData: any = { status };
+      if (status === 'delivered') updateData.deliveredAt = new Date();
+      if (status === 'read') updateData.readAt = new Date();
+      if (status === 'failed') {
+        updateData.failedAt = new Date();
+        updateData.error = error;
+      }
+      await prismaAny.whatsAppDelivery.update({ where: { id: existing.id }, data: updateData });
+    } else {
+      await prismaAny.whatsAppDelivery.create({
+        data: {
+          messageId,
+          status,
+          deliveredAt: status === 'delivered' ? new Date() : undefined,
+          readAt: status === 'read' ? new Date() : undefined,
+          failedAt: status === 'failed' ? new Date() : undefined,
+          error,
+          tenantId,
+        },
+      });
+    }
+  }
+
+  async getDeliveries(
+    tenantId: string,
+    filters?: { status?: string; page?: number; limit?: number },
+  ) {
+    const prismaAny = this.prisma as any;
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 20;
+    const where: any = { tenantId };
+    if (filters?.status) where.status = filters.status;
+
+    const [deliveries, total] = await Promise.all([
+      prismaAny.whatsAppDelivery.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prismaAny.whatsAppDelivery.count({ where }),
+    ]);
+
+    return { deliveries, total, page, limit };
   }
 
   // ── Process Send (BullMQ Worker) ────────────────────────────────────

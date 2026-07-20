@@ -548,6 +548,9 @@ model Tenant {
   Announcement          Announcement[]
   Meeting               Meeting[]
   SLAPolicy             SLAPolicy[]
+  SlaExecution          SlaExecution[]
+  SlaViolation          SlaViolation[]
+  SlaEscalation         SlaEscalation[]
   CustomerJourney       CustomerJourney[]
   Agent                 Agent[]
   CommissionPlan        CommissionPlan[]
@@ -557,6 +560,17 @@ model Tenant {
   Budget                Budget[]
   BankAccount           BankAccount[]
   TaxRule               TaxRule[]
+  AiRecommendation      AiRecommendation[]
+  LeadScoreHistory      LeadScoreHistory[]
+  AiExecutionLog        AiExecutionLog[]
+  CustomerPortalUser    CustomerPortalUser[]
+  CustomerPortalSession CustomerPortalSession[]
+  CustomerPortalAccessLog CustomerPortalAccessLog[]
+  CustomerPortalPreference CustomerPortalPreference[]
+  WhatsAppTemplate       WhatsAppTemplate[]
+  WhatsAppWebhook        WhatsAppWebhook[]
+  WhatsAppDelivery       WhatsAppDelivery[]
+  WhatsAppMedia          WhatsAppMedia[]
 
   @@index([slug])
   @@index([status])
@@ -785,6 +799,7 @@ model Company {
   notes     Note[]
   files     File[]
   Activity  Activity[]
+  conversations Conversation[]
 
   @@index([tenantId])
   @@index([ownerId])
@@ -865,12 +880,14 @@ model Lead {
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
 
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  company     Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  contact     Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  owner       User?    @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  tasks       Task[]
-  noteRecords Note[]
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  company       Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  contact       Contact?       @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  owner         User?          @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  tasks         Task[]
+  noteRecords   Note[]
+  conversations Conversation[]
+  activities    Activity[]
 
   @@index([tenantId])
   @@index([ownerId])
@@ -903,6 +920,7 @@ model Customer {
   deals     Deal[]
   contracts Contract[]
   quotes    Quote[]
+  portalUsers CustomerPortalUser[]
 
   @@index([tenantId])
   @@index([contactId])
@@ -1320,38 +1338,44 @@ model ContractSigner {
 // ═══════════════════════════════════════
 
 model Activity {
-  id          String       @id @default(uuid())
-  type        ActivityType
-  subject     String
-  description String?
-  dueDate     DateTime?
-  completedAt DateTime?
-  duration    Int?
-  outcome     String?
-  location    String?
-  isCompleted Boolean      @default(false)
-  tenantId    String
-  userId      String?
-  contactId   String?
-  dealId      String?
-  companyId   String?
-  quoteId     String?
-  contractId  String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
+  id              String       @id @default(uuid())
+  type            ActivityType
+  subject         String
+  description     String?
+  dueDate         DateTime?
+  completedAt     DateTime?
+  duration        Int?
+  outcome         String?
+  location        String?
+  isCompleted     Boolean      @default(false)
+  tenantId        String
+  userId          String?
+  contactId       String?
+  leadId          String?
+  conversationId  String?
+  dealId          String?
+  companyId       String?
+  quoteId         String?
+  contractId      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id])
-  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  contact  Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  deal     Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
-  company  Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  quote    Quote?    @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  contract Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contact      Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  deal         Deal?        @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  company      Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  quote        Quote?       @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  contract     Contract?    @relation(fields: [contractId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([userId])
   @@index([contactId])
+  @@index([leadId])
+  @@index([conversationId])
   @@index([dealId])
   @@index([quoteId])
   @@index([contractId])
@@ -1899,12 +1923,14 @@ model Conversation {
   teamId             String?
   queueId            String?
   slaStatus          String      @default("in_time")
+  slaPolicyId        String?
   firstResponseAt    DateTime?
   resolvedAt         DateTime?
   metadata           Json?
   tenantId           String
   userId             String?
   contactId          String?
+  leadId             String?
   dealId             String?
   companyId          String?
   createdAt          DateTime    @default(now())
@@ -1913,15 +1939,19 @@ model Conversation {
   tenant       Tenant                    @relation(fields: [tenantId], references: [id])
   user         User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
   contact      Contact?                  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  lead         Lead?                     @relation(fields: [leadId], references: [id], onDelete: SetNull)
   deal         Deal?                     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  company      Company?                  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   messages     Message[]
   notes        ConversationNote[]
   assignments  ConversationAssignment[]
   participants ConversationParticipant[]
+  activities   Activity[]
 
   @@index([tenantId])
   @@index([userId])
   @@index([contactId])
+  @@index([leadId])
   @@index([assignedToId])
   @@index([status])
   @@index([queueId])
@@ -2134,6 +2164,7 @@ model Ticket {
   conversationId  String?
   slaStatus       String    @default("in_time")
   slaDeadline     DateTime?
+  slaPolicyId     String?
   firstResponseAt DateTime?
   resolvedAt      DateTime?
   closedAt        DateTime?
@@ -5976,10 +6007,87 @@ model SLAPolicy {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant     Tenant          @relation(fields: [tenantId], references: [id])
+  executions SlaExecution[]
+  violations SlaViolation[]
 
   @@index([tenantId])
   @@map("sla_policies")
+}
+
+model SlaExecution {
+  id            String    @id @default(uuid())
+  entityType    String
+  entityId      String
+  slaPolicyId   String?
+  status        String    @default("running")
+  startedAt     DateTime  @default(now())
+  firstResponseAt DateTime?
+  resolvedAt    DateTime?
+  breachedAt    DateTime?
+  deadlineAt    DateTime?
+  tenantId      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  slaPolicy SLAPolicy? @relation(fields: [slaPolicyId], references: [id], onDelete: SetNull)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  violations SlaViolation[]
+
+  @@unique([entityType, entityId, tenantId])
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([status])
+  @@index([deadlineAt])
+  @@map("sla_executions")
+}
+
+model SlaViolation {
+  id              String   @id @default(uuid())
+  executionId     String
+  slaPolicyId     String?
+  entityType      String
+  entityId        String
+  violationType   String
+  deadlineAt      DateTime
+  violatedAt      DateTime @default(now())
+  severity        String   @default("warning")
+  resolved        Boolean  @default(false)
+  resolvedAt      DateTime?
+  tenantId        String
+  createdAt       DateTime @default(now())
+
+  execution SlaExecution? @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  slaPolicy SLAPolicy?    @relation(fields: [slaPolicyId], references: [id], onDelete: SetNull)
+  tenant    Tenant        @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([resolved])
+  @@index([violatedAt])
+  @@map("sla_violations")
+}
+
+model SlaEscalation {
+  id            String   @id @default(uuid())
+  executionId   String?
+  entityType    String
+  entityId      String
+  level         Int      @default(1)
+  action        String
+  targetUserId  String?
+  targetTeamId  String?
+  status        String   @default("pending")
+  executedAt    DateTime?
+  tenantId      String
+  createdAt     DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([status])
+  @@map("sla_escalations")
 }
 
 model ConversationRating {
@@ -6199,4 +6307,249 @@ model TaxRule {
   @@index([tenantId])
   @@index([type])
   @@map("tax_rules")
+}
+
+model AiRecommendation {
+  id          String   @id @default(uuid())
+  entityType  String
+  entityId    String
+  type        String
+  title       String
+  description String
+  priority    String   @default("medium")
+  score       Float    @default(0)
+  actionType  String?
+  actionData  Json?
+  status      String   @default("pending")
+  tenantId    String
+  userId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([type])
+  @@index([status])
+  @@map("ai_recommendations")
+}
+
+model LeadScoreHistory {
+  id        String   @id @default(uuid())
+  leadId    String
+  score     Int
+  breakdown Json?
+  reason    String?
+  tenantId  String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([createdAt])
+  @@map("lead_score_history")
+}
+
+model AiExecutionLog {
+  id          String   @id @default(uuid())
+  action      String
+  entityType  String?
+  entityId    String?
+  prompt      String?
+  response    String?
+  model       String?
+  provider    String?
+  tokens      Int      @default(0)
+  cost        Float    @default(0)
+  durationMs  Int      @default(0)
+  success     Boolean  @default(true)
+  error       String?
+  metadata    Json?
+  tenantId    String
+  userId      String?
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("ai_execution_logs")
+}
+
+model CustomerPortalUser {
+  id            String    @id @default(uuid())
+  email         String
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  avatar        String?
+  status        String    @default("active")
+  lastLoginAt   DateTime?
+  lastLoginIp   String?
+  failedAttempts Int      @default(0)
+  lockedUntil   DateTime?
+  tenantId      String
+  customerId    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  sessions CustomerPortalSession[]
+  accessLogs CustomerPortalAccessLog[]
+  preferences CustomerPortalPreference[]
+
+  @@unique([email, tenantId])
+  @@index([tenantId])
+  @@index([customerId])
+  @@index([email])
+  @@map("customer_portal_users")
+}
+
+model CustomerPortalSession {
+  id           String   @id @default(uuid())
+  userId       String
+  accessToken  String
+  refreshToken String
+  ip           String?
+  userAgent    String?
+  expiresAt    DateTime
+  isActive     Boolean  @default(true)
+  tenantId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user   CustomerPortalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant             @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([accessToken])
+  @@index([refreshToken])
+  @@map("customer_portal_sessions")
+}
+
+model CustomerPortalAccessLog {
+  id         String   @id @default(uuid())
+  userId     String
+  action     String
+  resource   String?
+  resourceId String?
+  ip         String?
+  userAgent  String?
+  metadata   Json?
+  tenantId   String
+  createdAt  DateTime @default(now())
+
+  user   CustomerPortalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant             @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("customer_portal_access_logs")
+}
+
+model CustomerPortalPreference {
+  id        String   @id @default(uuid())
+  userId    String
+  key       String
+  value     Json?
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   CustomerPortalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant             @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, key, tenantId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("customer_portal_preferences")
+}
+
+model WhatsAppTemplate {
+  id          String   @id @default(uuid())
+  externalId  String?
+  name        String
+  language    String   @default("pt_BR")
+  category    String   @default("UTILITY")
+  status      String   @default("PENDING")
+  components  Json?
+  variables   Json?
+  tenantId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([name, language, tenantId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("whatsapp_templates")
+}
+
+model WhatsAppWebhook {
+  id          String   @id @default(uuid())
+  eventType   String
+  payload     Json?
+  status      String   @default("received")
+  processedAt DateTime?
+  error       String?
+  tenantId    String
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("whatsapp_webhooks")
+}
+
+model WhatsAppDelivery {
+  id          String    @id @default(uuid())
+  messageId   String
+  status      String    @default("sent")
+  deliveredAt DateTime?
+  readAt      DateTime?
+  failedAt    DateTime?
+  error       String?
+  metadata    Json?
+  tenantId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([messageId, tenantId])
+  @@index([tenantId])
+  @@index([messageId])
+  @@index([status])
+  @@map("whatsapp_deliveries")
+}
+
+model WhatsAppMedia {
+  id          String   @id @default(uuid())
+  externalId  String?
+  type        String
+  mimeType    String?
+  url         String?
+  caption     String?
+  fileSize    Int?
+  tenantId    String
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([externalId])
+  @@map("whatsapp_media")
 }
